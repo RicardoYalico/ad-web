@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Mail, BookOpen, Calendar, Building, TrendingUp, Star, Search, X, Shield, Tag, Briefcase, AlertTriangle, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { Mail, BookOpen, Calendar, Building, TrendingUp, Star, Search, X, Shield, Tag, Briefcase, AlertTriangle, ChevronLeft, ChevronRight, Clock, Loader, History, ChevronDown, Trash2, CheckCircle } from 'lucide-react';
 
-// --- Mock Data: Datos de ejemplo con la nueva estructura ---
+// --- Mock Data (usado como fallback en caso de error de API) ---
 const initialApiData = {
   "data": [
     {
@@ -32,7 +32,78 @@ const formatEsa = (value) => {
     return `${(num * 100).toFixed(2)}%`;
 };
 
-// --- Componentes Auxiliares ---
+// --- Componente de superposición de carga ---
+const LoadingOverlay = ({ message, progress, hasError = false }) => (
+    <div className="fixed inset-0 bg-black bg-opacity-70 z-[100] flex flex-col justify-center items-center text-white p-4">
+        {!hasError && <Loader className="animate-spin h-12 w-12 text-white mb-6" />}
+        {hasError && <AlertTriangle className="h-12 w-12 text-red-500 mb-6" />}
+        <h2 className="text-2xl font-bold mb-2 text-center">{hasError ? "Error en el Proceso" : "Generando Asignación..."}</h2>
+        <p className="text-gray-300 mb-6 text-center max-w-md">{hasError ? "Ocurrió un problema." : "Este proceso puede tardar. Por favor, no cierres esta ventana."}</p>
+        <div className="w-full max-w-lg text-center p-6 bg-gray-800/60 rounded-xl shadow-lg">
+            <p className="mb-4 font-medium text-lg min-h-[56px] flex items-center justify-center">{message}</p>
+             {!hasError && (
+                <>
+                    <div className="w-full bg-gray-600 rounded-full h-4 overflow-hidden">
+                        <div 
+                            className="bg-blue-500 h-4 rounded-full transition-all duration-500 ease-out" 
+                            style={{ width: `${progress}%` }}>
+                        </div>
+                    </div>
+                    <p className="mt-2 text-sm font-semibold">{progress}% completado</p>
+                </>
+            )}
+        </div>
+    </div>
+);
+
+// --- Componente de Notificación ---
+const Notification = ({ type, title, message, onDismiss }) => {
+    const baseClasses = "p-4 rounded-lg shadow-md flex items-start";
+    const typeClasses = {
+    error: "bg-red-50 border-l-4 border-red-500 text-red-800",
+    success: "bg-green-50 border-l-4 border-green-500 text-green-800",
+    };
+    const icon = {
+    error: <AlertTriangle className="mr-3 h-5 w-5" />,
+    success: <CheckCircle className="mr-3 h-5 w-5" />,
+    };
+
+    return (
+    <div className={`${baseClasses} ${typeClasses[type]}`}>
+        {icon[type]}
+        <div className="flex-1">
+        <p className="font-bold">{title}</p>
+        <p className="text-sm">{message}</p>
+        </div>
+        <button onClick={onDismiss} className="ml-4 p-1 rounded-full hover:bg-black/10"><X size={18} /></button>
+    </div>
+    );
+};
+
+// --- Componente de Modal de Confirmación ---
+const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, isProcessing }) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-[110] flex justify-center items-center p-4">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+                <h3 className="text-xl font-bold text-gray-800">{title}</h3>
+                <p className="text-gray-600 mt-2 mb-6">{message}</p>
+                <div className="flex justify-end space-x-4">
+                    <button onClick={onClose} disabled={isProcessing} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 disabled:opacity-50">
+                        Cancelar
+                    </button>
+                    <button onClick={onConfirm} disabled={isProcessing} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:bg-red-400 flex items-center">
+                        {isProcessing && <Loader className="animate-spin mr-2 h-4 w-4" />}
+                        Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- Componentes sin cambios (StatCard, InfoPill, HorarioCard, etc.) ---
 const StatCard = ({ icon, label, value, colorClass = 'text-gray-700', isHighlighted = false }) => (
   <div className={`p-4 rounded-lg flex flex-col items-center justify-center text-center shadow-sm ${isHighlighted ? 'bg-blue-100 ring-2 ring-blue-300' : 'bg-gray-100/80'}`}>
     <div className={`${isHighlighted ? 'text-blue-700' : 'text-blue-600'} mb-2`}>{icon}</div>
@@ -40,18 +111,15 @@ const StatCard = ({ icon, label, value, colorClass = 'text-gray-700', isHighligh
     <div className={`font-bold ${colorClass} ${isHighlighted ? 'text-2xl text-blue-800' : 'text-xl'}`}>{value}</div>
   </div>
 );
-
 const InfoPill = ({ icon, label, value }) => (
     <div className="flex flex-col items-center justify-center bg-slate-200/60 p-3 rounded-lg text-center">
         <div className="flex items-center text-xs text-gray-500 font-semibold mb-1">
             {icon}
             <span className="ml-1.5">{label}</span>
         </div>
-        <span className="text-sm font-bold text-gray-800">{value}</span>
+        <span className="text-sm font-bold text-gray-800">{value || 'N/A'}</span>
     </div>
 );
-
-
 const HorarioCard = ({ horario }) => {
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
@@ -62,16 +130,15 @@ const HorarioCard = ({ horario }) => {
     return(
         <div className="border-t border-gray-200 mt-3 pt-3">
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm text-gray-600">
-                <p><strong>Campus:</strong> {horario.campus || 'N/A'}</p>
-                <p><strong>Aula:</strong> {horario.aula || 'N/A'}</p>
-                <p><strong>Día:</strong> {horario.dia || 'N/A'}</p>
-                <p><strong>Hora:</strong> {horario.hora || 'N/A'}</p>
-                <p className="sm:col-span-2"><strong>Periodo:</strong> {formatDate(horario.fechaInicio)} - {formatDate(horario.fechaFin)}</p>
+                 <p><strong>Campus:</strong> {horario.campus || 'N/A'}</p>
+                 <p><strong>Aula:</strong> {horario.aula || 'N/A'}</p>
+                 <p><strong>Día:</strong> {horario.dia || 'N/A'}</p>
+                 <p><strong>Hora:</strong> {horario.hora || 'N/A'}</p>
+                 <p className="sm:col-span-2"><strong>Periodo:</strong> {formatDate(horario.fechaInicio)} - {formatDate(horario.fechaFin)}</p>
              </div>
         </div>
     );
 };
-
 const PiddCourseCard = ({ piddData }) => (
     <div className="bg-amber-50 border-2 border-amber-300 p-6 rounded-2xl shadow-md mb-6">
         <div className="flex items-center mb-4">
@@ -86,11 +153,9 @@ const PiddCourseCard = ({ piddData }) => (
         </div>
     </div>
 );
-
-// --- Nuevo Modal para el detalle del evento del calendario ---
 const ScheduleDetailModal = ({ event, onClose }) => {
     if (!event) return null;
-     const formatDate = (dateString) => {
+    const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         try {
             return new Date(dateString).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric'});
@@ -125,9 +190,6 @@ const ScheduleDetailModal = ({ event, onClose }) => {
         </div>
     );
 };
-
-
-// --- Componente de Calendario ---
 const CalendarView = ({ courses, pidd, promedioEsa, onEventClick }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -255,7 +317,7 @@ const CalendarView = ({ courses, pidd, promedioEsa, onEventClick }) => {
                                                     >
                                                         <p className="font-bold truncate">{event.name}</p>
                                                         <p className="font-semibold truncate">NRC: {event.nrc}</p>
-                                                        <p className="truncate">Cod. Curso: {event.code}</p>
+                                                        <p className="truncate">Cód. Curso: {event.code}</p>
                                                         <p className="truncate">Mod.: {event.metEdu ? `${event.metEdu.charAt(0)}.` : ''} ({event.time})</p>
                                                         <p className="mt-1"><strong>ESA:</strong> {formatEsa(promedioEsa)}</p>
                                                     </button>
@@ -286,8 +348,6 @@ const CalendarView = ({ courses, pidd, promedioEsa, onEventClick }) => {
         </div>
     );
 };
-
-
 const TeacherDetailModal = ({ teacher, onClose }) => {
   const [activeTab, setActiveTab] = useState('calendar');
   const [selectedSchedule, setSelectedSchedule] = useState(null);
@@ -399,184 +459,479 @@ const TeacherDetailModal = ({ teacher, onClose }) => {
 
 // --- Componente Principal ---
 export default function AssignmentsPage() {
-  const [teachers, setTeachers] = useState([]);
-  const [selectedTeacher, setSelectedTeacher] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [piddFilter, setPiddFilter] = useState('Todos');
-  const [programFilter, setProgramFilter] = useState('Todos');
-  const [modalityFilter, setModalityFilter] = useState('Todos');
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+    const [teachers, setTeachers] = useState([]);
+    const [selectedTeacher, setSelectedTeacher] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [piddFilter, setPiddFilter] = useState('Todos');
+    const [programFilter, setProgramFilter] = useState('Todos');
+    const [modalityFilter, setModalityFilter] = useState('Todos');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+    
+    const [periodoAsignacion, setPeriodoAsignacion] = useState('2025-1');
+    const [periodoRUD, setPeriodoRUD] = useState('2025-1');
+    const [periodoProgHoraria, setPeriodoProgHoraria] = useState('2025-1');
+    const [periodoESA, setPeriodoESA] = useState('2025-1');
+    const [periodoPIDD, setPeriodoPIDD] = useState('2025-1');
+    
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [generationStatus, setGenerationStatus] = useState({ message: '', progress: 0, error: false });
+    const [isTableLoading, setIsTableLoading] = useState(true);
 
-  useEffect(() => {
-    // Simula la llamada a la API. Reemplaza esto con tu fetch.
-    fetch('https://kali-ad-web.beesoftware.net/api/asignaciones')
-      .then(res => res.json())
-      .then(data => setTeachers(data.data))
-      .catch(err => console.error("Error fetching data:", err));
-    // setTeachers(initialApiData.data);
-  }, []);
+    // --- NUEVOS ESTADOS PARA EL HISTORIAL ---
+    const [showReport, setShowReport] = useState(false);
+    const [isReportLoading, setIsReportLoading] = useState(false);
+    const [reportError, setReportError] = useState(null);
+    const [reportData, setReportData] = useState(null);
+    const [expandedSemesters, setExpandedSemesters] = useState({});
+    const [isProcessingDelete, setIsProcessingDelete] = useState(false);
+    const [reportToDelete, setReportToDelete] = useState(null);
 
-  const programOptions = useMemo(() => ['Todos', ...new Set(teachers.map(t => t.programa))], [teachers]);
-  const modalityOptions = useMemo(() => ['Todos', ...new Set(teachers.map(t => t.modalidad))], [teachers]);
+    // --- DATOS Y FUNCIONES DEL HISTORIAL ---
+    const mockReportData = {
+        "2025-1": [
+            { id: "rep1", fechaCarga: "15/06/2025", cantidad: 1250, ultimaActualizacion: new Date().toISOString() },
+            { id: "rep2", fechaCarga: "01/06/2025", cantidad: 1245, ultimaActualizacion: "2025-06-01T10:00:00.000Z" },
+        ],
+        "2024-2": [
+            { id: "rep4", fechaCarga: "10/12/2024", cantidad: 1180, ultimaActualizacion: "2024-12-10T10:00:00.000Z" },
+        ]
+    };
 
-  const filteredTeachers = useMemo(() => {
-    return teachers.filter(teacher => {
-      const pidd = teacher.pidd;
-      const teacherName = teacher.docente || (pidd ? pidd.docente : '');
-      const teacherId = teacher.idDocente || '';
-      
-      const searchTermMatch = teacherName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                              teacherId.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const piddMatch = piddFilter === 'Todos' ||
-                        (piddFilter === 'Con PIDD' && teacher.pidd !== null) ||
-                        (piddFilter === 'Sin PIDD' && teacher.pidd === null);
+    const formatDateTime = (isoString) => {
+      if (!isoString) return 'N/A';
+      try {
+        return new Date(isoString).toLocaleString('es-ES', {
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit',
+        });
+      } catch (e) {
+        return 'Fecha inválida';
+      }
+    };
 
-      const programMatch = programFilter === 'Todos' || teacher.programa === programFilter;
+    const fetchReportHistory = async () => {
+        setIsReportLoading(true);
+        setReportError(null);
+        try {
+            await new Promise(res => setTimeout(res, 1500));
+            // const response = await fetch('/api/asignaciones/historial');
+            // if (!response.ok) throw new Error("No se pudo cargar el historial.");
+            // const data = await response.json();
+            setReportData(mockReportData);
+        } catch (error) {
+            setReportError(error.message);
+        } finally {
+            setIsReportLoading(false);
+        }
+    };
 
-      const modalityMatch = modalityFilter === 'Todos' || teacher.modalidad === modalityFilter;
+    const toggleReport = () => {
+        const newShowState = !showReport;
+        setShowReport(newShowState);
+        if (newShowState && !reportData) {
+            fetchReportHistory();
+        }
+    };
 
-      return searchTermMatch && piddMatch && programMatch && modalityMatch;
-    });
-  }, [teachers, searchTerm, piddFilter, programFilter, modalityFilter]);
+    const handleDeleteReportClick = (report) => {
+        setReportToDelete(report);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!reportToDelete) return;
+
+        setIsProcessingDelete(true);
+        try {
+            await new Promise(res => setTimeout(res, 1000));
+            // const response = await fetch(`/api/asignaciones/historial/${reportToDelete.id}`, { method: 'DELETE' });
+            // if (!response.ok) throw new Error("No se pudo eliminar el reporte.");
+
+            const updatedData = { ...reportData };
+            for (const semester in updatedData) {
+                const initialLength = updatedData[semester].length;
+                updatedData[semester] = updatedData[semester].filter(r => r.id !== reportToDelete.id);
+                if (updatedData[semester].length !== initialLength) {
+                    if (updatedData[semester].length === 0) {
+                        delete updatedData[semester];
+                    }
+                    break;
+                }
+            }
+            setReportData(updatedData);
+
+        } catch (error) {
+            console.error("Error al eliminar:", error);
+            setReportError("No se pudo eliminar el registro. Intente de nuevo.");
+        } finally {
+            setIsProcessingDelete(false);
+            setReportToDelete(null);
+        }
+    };
+
+    const toggleSemesterExpansion = (semester) => {
+        setExpandedSemesters(prev => ({
+            ...prev,
+            [semester]: !prev[semester]
+        }));
+    };
+
+
+    const fetchData = async () => {
+        setIsTableLoading(true);
+        try {
+            const response = await fetch('https://kali-ad-web.beesoftware.net/api/asignaciones');
+            if (!response.ok) {
+                throw new Error(`Error en la API: ${response.status}`);
+            }
+            const data = await response.json();
+            setTeachers(data.data || []);
+        } catch (error) {
+            console.error("Error al cargar los datos de docentes:", error);
+            setTeachers(initialApiData.data);
+        } finally {
+            setIsTableLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const periodOptions = useMemo(() => {
+        const options = [];
+        for (let year = 2023; year <= 2027; year++) {
+            options.push(`${year}-1`);
+            options.push(`${year}-2`);
+        }
+        return options;
+    }, []);
+
+    const programOptions = useMemo(() => ['Todos', ...new Set(teachers.map(t => t.programa).filter(Boolean))], [teachers]);
+    const modalityOptions = useMemo(() => ['Todos', ...new Set(teachers.map(t => t.modalidad).filter(Boolean))], [teachers]);
+
+    const filteredTeachers = useMemo(() => {
+        return teachers.filter(teacher => {
+            const pidd = teacher.pidd;
+            const teacherName = teacher.docente || (pidd ? pidd.docente : '');
+            const teacherId = teacher.idDocente || '';
+            const searchTermMatch = teacherName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                    teacherId.toLowerCase().includes(searchTerm.toLowerCase());
+            const piddMatch = piddFilter === 'Todos' ||
+                              (piddFilter === 'Con PIDD' && teacher.pidd !== null) ||
+                              (piddFilter === 'Sin PIDD' && teacher.pidd === null);
+            const programMatch = programFilter === 'Todos' || teacher.programa === programFilter;
+            const modalityMatch = modalityFilter === 'Todos' || teacher.modalidad === modalityFilter;
+            return searchTermMatch && piddMatch && programMatch && modalityMatch;
+        });
+    }, [teachers, searchTerm, piddFilter, programFilter, modalityFilter]);
   
-  const paginatedTeachers = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredTeachers.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredTeachers, currentPage, itemsPerPage]);
+    const paginatedTeachers = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return filteredTeachers.slice(startIndex, startIndex + itemsPerPage);
+    }, [filteredTeachers, currentPage, itemsPerPage]);
 
-  const totalPages = Math.ceil(filteredTeachers.length / itemsPerPage);
+    const totalPages = Math.ceil(filteredTeachers.length / itemsPerPage);
 
-  const handleFilterChange = (setter, value) => {
-    setter(value);
-    setCurrentPage(1);
-  };
+    const handleFilterChange = (setter, value) => {
+        setter(value);
+        setCurrentPage(1);
+    };
   
-  const handlePageChange = (newPage) => {
-    if (newPage > 0 && newPage <= totalPages) {
-      setCurrentPage(newPage);
+    const handlePageChange = (newPage) => {
+        if (newPage > 0 && newPage <= totalPages) {
+            setCurrentPage(newPage);
+        }
+    };
+  
+    const getRoleBadge = (role) => {
+        if (!role) return 'bg-gray-200 text-gray-800';
+        if (role.toLowerCase().includes('tiempo completo')) return 'bg-green-100 text-green-800';
+        if (role.toLowerCase().includes('tiempo parcial')) return 'bg-blue-100 text-blue-800';
+        if (role.toLowerCase().includes('jefe de práctica')) return 'bg-yellow-100 text-yellow-800';
+        return 'bg-gray-200 text-gray-800';
     }
-  };
-  
-  const getRoleBadge = (role) => {
-    if (!role) return 'bg-gray-200 text-gray-800';
-    if (role.toLowerCase().includes('tiempo completo')) return 'bg-green-100 text-green-800';
-    if (role.toLowerCase().includes('tiempo parcial')) return 'bg-blue-100 text-blue-800';
-    if (role.toLowerCase().includes('jefe de práctica')) return 'bg-yellow-100 text-yellow-800';
-    return 'bg-gray-200 text-gray-800';
-  }
 
-  return (
-    <div className="bg-slate-100 font-sans min-h-screen p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
-        <header className="mb-6">
-            <h1 className="text-4xl font-bold text-gray-800">Panel de Docentes</h1>
-            <p className="text-lg text-gray-500 mt-1">Busca y visualiza los detalles de los colaboradores.</p>
-        </header>
+    const handleGenerate = async () => {
+        setIsGenerating(true);
+        setGenerationStatus({ message: 'Iniciando proceso de limpieza...', progress: 0, error: false });
 
-        <div className="bg-white p-6 rounded-2xl shadow-md mb-6 space-y-4">
-            <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="text"
-                  placeholder="Buscar por nombre o ID del docente..."
-                  value={searchTerm}
-                  onChange={(e) => handleFilterChange(setSearchTerm, e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label htmlFor="pidd-filter" className="block text-sm font-medium text-gray-700 mb-1">Estado PIDD</label>
-                    <select id="pidd-filter" value={piddFilter} onChange={e => handleFilterChange(setPiddFilter, e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg">
-                        <option value="Todos">Todos</option>
-                        <option value="Con PIDD">Con PIDD</option>
-                        <option value="Sin PIDD">Sin PIDD</option>
-                    </select>
+        try {
+            setGenerationStatus({ message: `Generando asignación para el periodo ${periodoAsignacion}...`, progress: 25, error: false });
+            const response = await fetch('https://kali-ad-web.beesoftware.net/api/sp-da002-limpiar');
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`La API respondió con un error ${response.status}: ${errorText || 'Sin detalles'}`);
+            }
+            
+            setGenerationStatus({ message: 'Limpieza completada. Actualizando la lista de docentes...', progress: 75, error: false });
+            await new Promise(res => setTimeout(res, 1500)); 
+
+            await fetchData();
+            if (showReport) await fetchReportHistory(); // Actualizar historial si está abierto
+            
+            setGenerationStatus({ message: '¡Proceso completado con éxito!', progress: 100, error: false });
+            await new Promise(res => setTimeout(res, 2000));
+
+        } catch (error) {
+            console.error("Error al generar asignación:", error);
+            setGenerationStatus({ message: error.message, progress: 100, error: true });
+            await new Promise(res => setTimeout(res, 5000));
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+
+    return (
+        <div className="bg-slate-100 font-sans min-h-screen p-4 sm:p-6 lg:p-8">
+            {isGenerating && <LoadingOverlay message={generationStatus.message} progress={generationStatus.progress} hasError={generationStatus.error} />}
+            <ConfirmationModal 
+                isOpen={!!reportToDelete}
+                onClose={() => setReportToDelete(null)}
+                onConfirm={handleConfirmDelete}
+                title="Confirmar Eliminación"
+                message={`¿Estás seguro de que quieres eliminar el reporte de carga del ${reportToDelete?.fechaCarga}? Esta acción no se puede deshacer.`}
+                isProcessing={isProcessingDelete}
+            />
+
+            <div className="max-w-7xl mx-auto">
+                <header className="mb-6">
+                    <h1 className="text-4xl font-bold text-gray-800">Panel de Docentes</h1>
+                    <p className="text-lg text-gray-500 mt-1">Busca, visualiza y genera las asignaciones de los colaboradores.</p>
+                </header>
+                
+                {/* --- SECCIONES REORDENADAS --- */}
+                <div className="bg-white p-6 rounded-2xl shadow-md mb-6">
+                    <h2 className="text-xl font-bold text-gray-800 mb-4">Generar Nueva Asignación</h2>
+                    <fieldset disabled={isGenerating || isTableLoading} className="space-y-6">
+                        <div>
+                            <h3 className="text-md font-semibold text-gray-600 mb-2">Periodos de Origen de Datos</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div>
+                                    <label htmlFor="rud-period" className="block text-sm font-medium text-gray-700 mb-1">RUD Periodo</label>
+                                    <select id="rud-period" value={periodoRUD} onChange={e => setPeriodoRUD(e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                        {periodOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label htmlFor="ph-period" className="block text-sm font-medium text-gray-700 mb-1">Prog. Horaria Periodo</label>
+                                    <select id="ph-period" value={periodoProgHoraria} onChange={e => setPeriodoProgHoraria(e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                        {periodOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label htmlFor="esa-period" className="block text-sm font-medium text-gray-700 mb-1">ESA Periodo</label>
+                                    <select id="esa-period" value={periodoESA} onChange={e => setPeriodoESA(e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                        {periodOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label htmlFor="pidd-period" className="block text-sm font-medium text-gray-700 mb-1">PIDD Periodo</label>
+                                    <select id="pidd-period" value={periodoPIDD} onChange={e => setPeriodoPIDD(e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                        {periodOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end bg-blue-50 p-6 rounded-xl border border-blue-200">
+                            <div className="md:col-span-2">
+                                <label htmlFor="assignment-period" className="block text-sm font-medium text-blue-800 mb-1">
+                                    Periodo de Asignación a Generar
+                                </label>
+                                <select 
+                                    id="assignment-period" 
+                                    value={periodoAsignacion} 
+                                    onChange={e => setPeriodoAsignacion(e.target.value)} 
+                                    className="w-full p-3 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base font-semibold text-blue-900"
+                                >
+                                    {periodOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                </select>
+                            </div>
+                            <button 
+                                onClick={handleGenerate} 
+                                disabled={isGenerating || isTableLoading}
+                                className="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center h-full"
+                            >
+                                GENERAR ASIGNACIÓN
+                            </button>
+                        </div>
+                    </fieldset>
                 </div>
-                 <div>
-                    <label htmlFor="program-filter" className="block text-sm font-medium text-gray-700 mb-1">Programa</label>
-                    <select id="program-filter" value={programFilter} onChange={e => handleFilterChange(setProgramFilter, e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg">
-                        {programOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                    </select>
-                </div>
-                 <div>
-                    <label htmlFor="modality-filter" className="block text-sm font-medium text-gray-700 mb-1">Modalidad</label>
-                    <select id="modality-filter" value={modalityFilter} onChange={e => handleFilterChange(setModalityFilter, e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg">
-                        {modalityOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                    </select>
-                </div>
-            </div>
-        </div>
-        
-        <div className="overflow-x-auto bg-white rounded-2xl shadow-md">
-          <table className="w-full text-sm text-left text-gray-600">
-            <thead className="text-xs text-gray-700 uppercase bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3">Docente</th>
-                <th scope="col" className="px-6 py-3">ID Docente</th>
-                <th scope="col" className="px-6 py-3">Rol</th>
-                <th scope="col" className="px-6 py-3">Programa</th>
-                <th scope="col" className="px-6 py-3">Modalidad</th>
-                <th scope="col" className="px-6 py-3"><span className="sr-only">Ver Detalles</span></th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedTeachers.map((teacher) => (
-                <tr key={teacher._id || teacher.idDocente} className="bg-white border-b hover:bg-gray-50">
-                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                    <div className="flex items-center">
-                        {teacher.pidd && <AlertTriangle className="text-amber-500 mr-2 flex-shrink-0" size={16} title="Este docente tiene un PIDD"/>}
-                        {teacher.docente || (teacher.pidd ? teacher.pidd.docente : 'Nombre no disponible')}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">{teacher.idDocente}</td>
-                  <td className="px-6 py-4">
-                      <span className={`px-2 py-1 font-semibold text-xs rounded-full ${getRoleBadge(teacher.RolColaborador)}`}>
-                        {teacher.RolColaborador}
-                      </span>
-                  </td>
-                  <td className="px-6 py-4">{teacher.programa}</td>
-                  <td className="px-6 py-4">{teacher.modalidad}</td>
-                  <td className="px-6 py-4 text-right">
-                    <button onClick={() => setSelectedTeacher(teacher)} className="font-medium text-blue-600 hover:underline">
-                      Ver Detalles
+                
+                <div className="mb-6 bg-white rounded-xl shadow-md">
+                    <button onClick={toggleReport} className="w-full flex justify-between items-center p-4 text-left">
+                        <h2 className="text-xl font-semibold text-gray-700 flex items-center">
+                            <History className="mr-3 text-purple-600" /> Historial de Cargas
+                        </h2>
+                        <ChevronDown className={`transform transition-transform duration-300 ${showReport ? 'rotate-180' : ''}`} />
                     </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    {showReport && (
+                        <div className="p-4 md:p-6 border-t">
+                            {isReportLoading ? (
+                                <div className="flex items-center justify-center p-5"><Loader className="animate-spin h-6 w-6 text-purple-600" /></div>
+                            ) : reportError ? (
+                                <Notification type="error" title="Error de Reporte" message={reportError} onDismiss={() => setReportError(null)} />
+                            ) : (
+                                <div className="space-y-8">
+                                    {reportData && Object.keys(reportData).length > 0 ? Object.keys(reportData).map(semestre => {
+                                        const [mostRecent, ...olderReports] = reportData[semestre];
+                                        return (
+                                            <div key={semestre}>
+                                                <h3 className="text-xl font-semibold text-gray-800 mb-3">Semestre: {semestre}</h3>
+                                                <div className="relative bg-purple-50 border-l-4 border-purple-500 rounded-r-lg p-4 mb-4 shadow-sm">
+                                                    <p className="font-bold text-purple-800">Carga más reciente</p>
+                                                    <p><span className="font-semibold">Fecha de Carga:</span> {mostRecent.fechaCarga}</p>
+                                                    <p><span className="font-semibold">Registros:</span> {mostRecent.cantidad.toLocaleString()}</p>
+                                                    <p className="text-sm text-gray-600 mt-1">Actualizado: {formatDateTime(mostRecent.ultimaActualizacion)}</p>
+                                                    <button onClick={() => handleDeleteReportClick(mostRecent)} disabled={isProcessingDelete} className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"><Trash2 size={16}/></button>
+                                                </div>
+                                                
+                                                {olderReports.length > 0 && (
+                                                    <div>
+                                                        <button onClick={() => toggleSemesterExpansion(semestre)} className="text-sm text-purple-600 hover:text-purple-800 flex items-center mb-2">
+                                                            {expandedSemesters[semestre] ? 'Ocultar historial' : `Ver ${olderReports.length} cargas anteriores`}
+                                                            <ChevronDown className={`ml-1 transform transition-transform duration-200 ${expandedSemesters[semestre] ? 'rotate-180' : ''}`} size={16}/>
+                                                        </button>
+                                                        {expandedSemesters[semestre] && (
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                                {olderReports.map((item, index) => (
+                                                                    <div key={index} className="relative bg-gray-50 border rounded-lg p-3 text-sm">
+                                                                        <p className="font-bold">{item.fechaCarga}</p>
+                                                                        <p>Registros: {item.cantidad.toLocaleString()}</p>
+                                                                        <p className="text-xs text-gray-500 mt-1">Actualizado: {formatDateTime(item.ultimaActualizacion)}</p>
+                                                                        <button onClick={() => handleDeleteReportClick(item)} disabled={isProcessingDelete} className="absolute top-1 right-1 p-1 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"><Trash2 size={14}/></button>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    }) : <p className="text-center text-gray-500 py-4">No hay reportes de carga disponibles.</p>}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                <div className="bg-white p-6 rounded-2xl shadow-md mb-6">
+                 <h2 className="text-xl font-bold text-gray-800 mb-4">Filtrar Docentes</h2>
+                  <fieldset disabled={isGenerating || isTableLoading} className="space-y-4">
+                    <div className="relative">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                        <input
+                            type="text"
+                            placeholder="Buscar por nombre o ID del docente..."
+                            value={searchTerm}
+                            onChange={(e) => handleFilterChange(setSearchTerm, e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label htmlFor="pidd-filter" className="block text-sm font-medium text-gray-700 mb-1">Estado PIDD</label>
+                            <select id="pidd-filter" value={piddFilter} onChange={e => handleFilterChange(setPiddFilter, e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg">
+                                <option value="Todos">Todos</option>
+                                <option value="Con PIDD">Con PIDD</option>
+                                <option value="Sin PIDD">Sin PIDD</option>
+                            </select>
+                        </div>
+                         <div>
+                            <label htmlFor="program-filter" className="block text-sm font-medium text-gray-700 mb-1">Programa</label>
+                            <select id="program-filter" value={programFilter} onChange={e => handleFilterChange(setProgramFilter, e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg">
+                                {programOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                            </select>
+                        </div>
+                         <div>
+                            <label htmlFor="modality-filter" className="block text-sm font-medium text-gray-700 mb-1">Modalidad</label>
+                            <select id="modality-filter" value={modalityFilter} onChange={e => handleFilterChange(setModalityFilter, e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg">
+                                {modalityOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                            </select>
+                        </div>
+                    </div>
+                    </fieldset>
+                </div>
+                
+                <div className="overflow-x-auto bg-white rounded-2xl shadow-md min-h-[400px]">
+                    {isTableLoading ? (
+                        <div className="flex justify-center items-center h-full min-h-[400px]">
+                            <Loader className="animate-spin h-8 w-8 text-blue-600 mr-3" />
+                            <span className="text-gray-600 font-medium">Cargando datos de docentes...</span>
+                        </div>
+                    ) : paginatedTeachers.length > 0 ? (
+                        <table className="w-full text-sm text-left text-gray-600">
+                            <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                                <tr>
+                                    <th scope="col" className="px-6 py-3">Docente</th>
+                                    <th scope="col" className="px-6 py-3">ID Docente</th>
+                                    <th scope="col" className="px-6 py-3">Rol</th>
+                                    <th scope="col" className="px-6 py-3">Programa</th>
+                                    <th scope="col" className="px-6 py-3">Modalidad</th>
+                                    <th scope="col" className="px-6 py-3"><span className="sr-only">Ver Detalles</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {paginatedTeachers.map((teacher) => (
+                                    <tr key={teacher._id || teacher.idDocente} className="bg-white border-b hover:bg-gray-50">
+                                        <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                                            <div className="flex items-center">
+                                                {teacher.pidd && <AlertTriangle className="text-amber-500 mr-2 flex-shrink-0" size={16} title="Este docente tiene un PIDD"/>}
+                                                {teacher.docente || (teacher.pidd ? teacher.pidd.docente : 'Nombre no disponible')}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">{teacher.idDocente}</td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2 py-1 font-semibold text-xs rounded-full ${getRoleBadge(teacher.RolColaborador)}`}>
+                                                {teacher.RolColaborador}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">{teacher.programa}</td>
+                                        <td className="px-6 py-4">{teacher.modalidad}</td>
+                                        <td className="px-6 py-4 text-right">
+                                            <button onClick={() => setSelectedTeacher(teacher)} className="font-medium text-blue-600 hover:underline">
+                                                Ver Detalles
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                         <div className="flex justify-center items-center h-full min-h-[400px]">
+                            <p className="text-gray-500 text-center">No se encontraron docentes.<br/>Intenta ajustar los filtros o genera una nueva asignación.</p>
+                        </div>
+                    )}
+                </div>
+
+                {totalPages > 0 && !isTableLoading && (
+                    <div className="flex justify-between items-center mt-6">
+                        <button
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1 || isGenerating}
+                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Anterior
+                        </button>
+                        <span className="text-sm text-gray-700">
+                            Página {currentPage} de {totalPages}
+                        </span>
+                        <button
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages || isGenerating}
+                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Siguiente
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {selectedTeacher && (
+                <TeacherDetailModal teacher={selectedTeacher} onClose={() => setSelectedTeacher(null)} />
+            )}
         </div>
-
-        {totalPages > 1 && (
-          <div className="flex justify-between items-center mt-6">
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Anterior
-            </button>
-            <span className="text-sm text-gray-700">
-              Página {currentPage} de {totalPages}
-            </span>
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Siguiente
-            </button>
-          </div>
-        )}
-
-      </div>
-
-      {selectedTeacher && (
-        <TeacherDetailModal teacher={selectedTeacher} onClose={() => setSelectedTeacher(null)} />
-      )}
-    </div>
-  );
+    );
 }
