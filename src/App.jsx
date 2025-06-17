@@ -129,15 +129,16 @@ const App = () => {
   const menuItems = [
     { name: 'Panel de Control', icon: <LayoutDashboard size={20} /> },
     { name: 'Gestión de Asignación', icon: <UserCheck size={20} /> },
-    { name: 'Gestión Disponibilidad EP', icon: <Briefcase size={20} /> },
-    { name: 'Reporte Unico Docente', icon: <FileText  size={20} /> },
     { name: 'Programación Horaria', icon: <CalendarRange size={20} /> },
     { name: 'ESA', icon: <Users size={20} /> },
+    { name: 'Reporte Unico Docente', icon: <FileText  size={20} /> },
+    { name: 'Plan Integral Docente', icon: <CalendarDays size={20} /> },
+    { name: 'Gestión Disponibilidad EP', icon: <Briefcase size={20} /> },
     { name: 'Super Malla', icon: <Layers3 size={20} /> },
     { name: 'Gestor de Rúbricas', icon: <BookMarked size={20} /> },
     { name: 'Consolidados de Registro', icon: <ClipboardList size={20} /> },
     { name: 'Horarios', icon: <CalendarDays size={20} /> },
-    { name: 'Plan Integral Docente', icon: <CalendarDays size={20} /> },
+
   ];
 
   if (!isAuthenticated) {
