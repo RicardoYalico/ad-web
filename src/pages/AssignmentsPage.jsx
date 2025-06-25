@@ -2,23 +2,26 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Mail, BookOpen, Calendar, Building, TrendingUp, Star, Search, X, Shield, Tag, Briefcase, AlertTriangle, ChevronLeft, ChevronRight, Clock, Loader, History, ChevronDown, Trash2, CheckCircle } from 'lucide-react';
 
 // --- Mock Data (usado como fallback en caso de error de API) ---
+// --- ACTUALIZADO para reflejar la estructura de historial de la API ---
 const initialApiData = {
   "data": [
     {
-      "_id": "684c865e5e8fed1ea67601d4", "periodo": 225413, "idDocente": "N00112983", "docente": "CAROL IVONNE MORENO SALAZAR", "RolColaborador": "DOCENTE TIEMPO PARCIAL", "programa": "UG", "modalidad": "Tesis",
+      "_id": { "$oid": "685ae84a5c47091261010a33" },
+      "periodo": "225413", "idDocente": "N00340533", "docente": "FIORENTINI/ALVAREZ, DIEGO JOSE HUMBERTO", "RolColaborador": "DOCENTE DICTANTE", "programa": "UG", "modalidad": "Presencial",
       "cursos": [
-        { "nombreCurso": "TRABAJO DE INVESTIGACIÓN", "codCurso": "INV101", "seccion": "INV101-A", "nrc": "12345", "periodo": 225413, "metEdu": "Blended", "horarios": [{ "dia": "Lunes", "hora": "10:00 - 12:00", "campus": "VIR", "aula": "VIRTUAL-1", "fechaInicio": "Mar 24, 2025 12:00:00 AM", "fechaFin": "Jul 13, 2025 12:00:00 AM" }] },
-        { "nombreCurso": "TESIS", "codCurso": "TES202", "seccion": "TES202-B", "nrc": "12346", "periodo": 225413, "metEdu": "Presencial", "horarios": [{ "dia": "Miércoles", "hora": "18:00 - 20:00", "campus": "LIMA CENTRO", "aula": "C-102", "fechaInicio": "Mar 24, 2025 12:00:00 AM", "fechaFin": "Jul 13, 2025 12:00:00 AM" }] }
+        { "nombreCurso": "FÍSICA 1", "codCurso": "FISI1207", "seccion": "FISI.1207.225413.16221.P", "periodo": "225413", "nrc": "16221", "metEdu": "P", "horarios": [{ "fechaInicio": "Mar 24, 2025 12:00:00 AM", "fechaFin": "Jul 13, 2025 12:00:00 AM", "dia": "LUNES", "hora": "1750 - 1920", "campus": "TSI", "aula": "B308", "estadoHistorico": "NUEVO" }, { "fechaInicio": "Mar 24, 2025 12:00:00 AM", "fechaFin": "Jul 13, 2025 12:00:00 AM", "dia": "LUNES", "hora": "1930 - 2100", "campus": "TSI", "aula": "B308", "estadoHistorico": "NUEVO" }], "estadoHistorico": "NUEVO" },
       ],
-      "promedioEsa": 0.39,
-      "pidd": { "_id": "684c7f7e1601f166623a674e", "docente": "CAROL IVONNE MORENO SALAZAR", "cargo": "DOCENTE TIEMPO PARCIAL", "correo": "carol.moreno@upn.pe", "esa": 0.4926, "rubrica": "20", "dispersion": "Amarillo Derecha Inferior", "tipoPlanIntegral": "ESA GENERAL", "nombreCurso": "", "esaCurso": 0.4926 }
+      "promedioEsa": 0.8038, "pidd": null, "estadoHistorico": "NUEVO", "semestre": "2025-1",
+      "fechaHoraEjecucion": "2025-06-24T19:02:02.086Z" 
     },
     {
-      "_id": "c4d5e6f7g8h9i0j1k2l3m4n5", "periodo": 225413, "idDocente": "N00340420", "docente": "ELIZABETH DEL CASTILLO CANTORAL", "RolColaborador": "DOCENTE A TIEMPO PARCIAL ", "programa": "UG", "modalidad": "Presencial",
+       "_id": { "$oid": "685ae8975c47091261011735" },
+      "periodo": "225413", "idDocente": "N00340533", "docente": "FIORENTINI/ALVAREZ, DIEGO JOSE HUMBERTO", "RolColaborador": "DOCENTE DICTANTE", "programa": "UG", "modalidad": "Presencial",
       "cursos": [
-        { "nombreCurso": "INFORMÁTICA PARA NEGOCIOS", "codCurso": "INFO1103P", "seccion": "INFO.1103P.225413.9897.P", "nrc": "9897", "periodo": 225413, "metEdu": "Presencial", "horarios": [ { "dia": "JUEVES", "hora": "10:50 - 12:20", "campus": "CAJ", "aula": "LCOM5", "fechaInicio": "Mar 24, 2025 12:00:00 AM", "fechaFin": "Jul 13, 2025 12:00:00 AM" } ] },
-        { "nombreCurso": "ADUANAS", "codCurso": "COME1302", "seccion": "COME.1302.225413.10018.P", "nrc": "10018", "periodo": 225413, "metEdu": "Presencial", "horarios": [ { "dia": "MARTES", "hora": "10:50 - 12:20", "campus": "CAJ", "aula": "B302", "fechaInicio": "May 19, 2025 12:00:00 AM", "fechaFin": "May 25, 2025 12:00:00 AM" }, { "dia": "MARTES", "hora": "12:30 - 14:00", "campus": "CAJ", "aula": "B302", "fechaInicio": "Jun 30, 2025 12:00:00 AM", "fechaFin": "Jul 6, 2025 12:00:00 AM" } ] }
-      ], "promedioEsa": 0.75, "pidd": null
+         { "nombreCurso": "FÍSICA 3", "codCurso": "FISI1209", "seccion": "FISI.1209.225413.6168.P", "periodo": "225413", "nrc": "6168", "metEdu": "P", "horarios": [ { "fechaInicio": "Mar 24, 2025 12:00:00 AM", "fechaFin": "Jul 13, 2025 12:00:00 AM", "dia": "MARTES", "hora": "1610 - 1740", "campus": "TSI", "aula": "A301", "estadoHistorico": "NUEVO" } ], "estadoHistorico": "NUEVO" },
+      ],
+       "promedioEsa": 0.8038, "pidd": null, "estadoHistorico": "MODIFICADO", "semestre": "2025-1",
+       "fechaHoraEjecucion": "2025-06-24T18:51:49.620Z"
     }
   ]
 };
@@ -31,6 +34,47 @@ const formatEsa = (value) => {
     }
     return `${(num * 100).toFixed(2)}%`;
 };
+
+// --- NUEVO: Componente para badges de estado ---
+const StatusBadge = ({ status }) => {
+    if (!status) return null;
+    
+    const styles = {
+        NUEVO: 'bg-green-100 text-green-800',
+        MODIFICADO: 'bg-yellow-100 text-yellow-800',
+    };
+    
+    return (
+        <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${styles[status]}`}>
+            {status}
+        </span>
+    );
+};
+
+// --- CORREGIDO: Convertido de Hook a función auxiliar ---
+const getStatusStyles = (status) => {
+    switch (status) {
+        case 'NUEVO':
+            return {
+                background: 'bg-green-50',
+                border: 'border-l-4 border-green-400',
+                highlight: 'bg-green-100 border-green-500 text-green-900 hover:bg-green-200',
+            };
+        case 'MODIFICADO':
+            return {
+                background: 'bg-yellow-50',
+                border: 'border-l-4 border-yellow-400',
+                highlight: 'bg-yellow-100 border-yellow-500 text-yellow-900 hover:bg-yellow-200',
+            };
+        default:
+            return {
+                background: 'bg-white',
+                border: 'border-l-4 border-transparent',
+                highlight: 'bg-blue-100 border-blue-500 text-blue-900 hover:bg-blue-200',
+            };
+    }
+};
+
 
 // --- Componente de superposición de carga ---
 const LoadingOverlay = ({ message, progress, hasError = false }) => (
@@ -102,8 +146,6 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, isProce
         </div>
     );
 };
-
-// --- Componentes sin cambios (StatCard, InfoPill, HorarioCard, etc.) ---
 const StatCard = ({ icon, label, value, colorClass = 'text-gray-700', isHighlighted = false }) => (
   <div className={`p-4 rounded-lg flex flex-col items-center justify-center text-center shadow-sm ${isHighlighted ? 'bg-blue-100 ring-2 ring-blue-300' : 'bg-gray-100/80'}`}>
     <div className={`${isHighlighted ? 'text-blue-700' : 'text-blue-600'} mb-2`}>{icon}</div>
@@ -120,25 +162,6 @@ const InfoPill = ({ icon, label, value }) => (
         <span className="text-sm font-bold text-gray-800">{value || 'N/A'}</span>
     </div>
 );
-const HorarioCard = ({ horario }) => {
-    const formatDate = (dateString) => {
-        if (!dateString) return 'N/A';
-        try {
-            return new Date(dateString).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric'});
-        } catch (e) { return 'Fecha inválida'; }
-    };
-    return(
-        <div className="border-t border-gray-200 mt-3 pt-3">
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm text-gray-600">
-                 <p><strong>Campus:</strong> {horario.campus || 'N/A'}</p>
-                 <p><strong>Aula:</strong> {horario.aula || 'N/A'}</p>
-                 <p><strong>Día:</strong> {horario.dia || 'N/A'}</p>
-                 <p><strong>Hora:</strong> {horario.hora || 'N/A'}</p>
-                 <p className="sm:col-span-2"><strong>Periodo:</strong> {formatDate(horario.fechaInicio)} - {formatDate(horario.fechaFin)}</p>
-             </div>
-        </div>
-    );
-};
 const PiddCourseCard = ({ piddData }) => (
     <div className="bg-amber-50 border-2 border-amber-300 p-6 rounded-2xl shadow-md mb-6">
         <div className="flex items-center mb-4">
@@ -169,9 +192,10 @@ const ScheduleDetailModal = ({ event, onClose }) => {
                         <h3 className="text-2xl font-bold text-gray-800">{event.name}</h3>
                         <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-200"><X size={20} /></button>
                     </div>
-                    <p className={`mt-2 px-3 py-1 text-sm font-semibold rounded-full inline-block ${event.isPidd ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}`}>
-                        {event.isPidd ? 'Curso en Plan de Mejora' : 'Curso Regular'}
-                    </p>
+                     <div className="flex items-center space-x-2 mt-2">
+                        <StatusBadge status={event.estadoHistorico} />
+                        {event.isPidd && <p className={`px-3 py-1 text-sm font-semibold rounded-full inline-block bg-amber-100 text-amber-800`}>Curso en Plan de Mejora</p>}
+                     </div>
                     <div className="mt-6 space-y-3 text-gray-700">
                         <p><strong>Sección:</strong> {event.section || 'No especificada'}</p>
                         <p><strong>NRC:</strong> {event.nrc || 'No especificado'}</p>
@@ -190,7 +214,7 @@ const ScheduleDetailModal = ({ event, onClose }) => {
         </div>
     );
 };
-const CalendarView = ({ courses, pidd, promedioEsa, onEventClick }) => {
+const CalendarView = ({ courses, pidd, onEventClick }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
 
     const dayNameToNumber = (name) => {
@@ -229,6 +253,9 @@ const CalendarView = ({ courses, pidd, promedioEsa, onEventClick }) => {
                         const dateKey = getFormattedDateKey(currentDateInLoop);
                         if (!events[dateKey]) events[dateKey] = [];
                         const isPiddCourse = pidd?.codCurso === course.codCurso;
+                        
+                        const eventStatus = horario.estadoHistorico || course.estadoHistorico;
+
                         events[dateKey].push({
                             name: course.nombreCurso,
                             code: course.codCurso,
@@ -242,7 +269,8 @@ const CalendarView = ({ courses, pidd, promedioEsa, onEventClick }) => {
                             fechaInicio: horario.fechaInicio,
                             fechaFin: horario.fechaFin,
                             isPidd: isPiddCourse,
-                            esaCurso: isPiddCourse ? pidd.esaCurso : null
+                            esaCurso: isPiddCourse ? pidd.esaCurso : null,
+                            estadoHistorico: eventStatus
                         });
                     }
                     currentDateInLoop.setDate(currentDateInLoop.getDate() + 1);
@@ -272,6 +300,35 @@ const CalendarView = ({ courses, pidd, promedioEsa, onEventClick }) => {
         return hours * 60 + minutes;
     };
 
+    const EventCard = ({ event, onClick }) => {
+        const styles = getStatusStyles(event.estadoHistorico);
+        
+        if(!event.time) return null;
+        const [start, end] = event.time.split('-').map(t => t.trim());
+        if(!start || !end) return null;
+        
+        const startMinutes = timeStringToMinutes(start);
+        const endMinutes = timeStringToMinutes(end);
+        if (isNaN(startMinutes) || isNaN(endMinutes)) return null;
+
+        const top = ((startMinutes - (7 * 60)) / 60) * 5;
+        const height = ((endMinutes - startMinutes) / 60) * 5;
+
+        return (
+            <button
+                onClick={() => onClick(event)}
+                className={`absolute w-[96%] left-[2%] p-2 text-left text-xs rounded-lg shadow-md overflow-hidden transition-colors ${event.isPidd ? 'bg-amber-100 border-l-4 border-amber-500 text-amber-900 hover:bg-amber-200' : styles.highlight}`}
+                style={{ top: `${top}rem`, height: `${height}rem`, zIndex: 10 }}
+            >
+                <p className="font-bold truncate">{event.name}</p>
+                <p className="font-semibold truncate">NRC: {event.nrc}</p>
+                <p className="truncate">Cód: {event.code}</p>
+                <p className="truncate">Mod: {event.metEdu ? `${event.metEdu.charAt(0)}.` : ''} ({event.time})</p>
+                {event.estadoHistorico && <StatusBadge status={event.estadoHistorico} />}
+            </button>
+        );
+    };
+
     const renderWeeklyView = () => {
         const timeSlots = Array.from({ length: 16 }, (_, i) => `${String(i + 7).padStart(2, '0')}:00`);
         const startOfWeek = new Date(currentDate);
@@ -299,30 +356,9 @@ const CalendarView = ({ courses, pidd, promedioEsa, onEventClick }) => {
                                     <div className="relative h-full">
                                         {timeSlots.map((_, i) => <div key={i} className="h-20 border-t"></div>)}
                                         <div className="absolute inset-0 p-1">
-                                            {eventsForDay.map((event, eventIndex) => {
-                                                if(!event.time) return null;
-                                                const [start, end] = event.time.split('-').map(t => t.trim());
-                                                if(!start || !end) return null;
-                                                const startMinutes = timeStringToMinutes(start);
-                                                const endMinutes = timeStringToMinutes(end);
-                                                if (isNaN(startMinutes) || isNaN(endMinutes)) return null;
-                                                const top = ((startMinutes - (7 * 60)) / 60) * 5;
-                                                const height = ((endMinutes - startMinutes) / 60) * 5;
-                                                return (
-                                                    <button
-                                                        key={eventIndex}
-                                                        onClick={() => onEventClick(event)}
-                                                        className={`absolute w-[96%] left-[2%] p-2 text-left text-xs rounded-lg shadow-md overflow-hidden ${event.isPidd ? 'bg-amber-100 border-l-4 border-amber-500 text-amber-900 hover:bg-amber-200' : 'bg-blue-100 border-l-4 border-blue-500 text-blue-900 hover:bg-blue-200'} transition-colors`}
-                                                        style={{ top: `${top}rem`, height: `${height}rem`, zIndex: 10 }}
-                                                    >
-                                                        <p className="font-bold truncate">{event.name}</p>
-                                                        <p className="font-semibold truncate">NRC: {event.nrc}</p>
-                                                        <p className="truncate">Cód. Curso: {event.code}</p>
-                                                        <p className="truncate">Mod.: {event.metEdu ? `${event.metEdu.charAt(0)}.` : ''} ({event.time})</p>
-                                                        <p className="mt-1"><strong>ESA:</strong> {formatEsa(promedioEsa)}</p>
-                                                    </button>
-                                                );
-                                            })}
+                                            {eventsForDay.map((event, eventIndex) => (
+                                                <EventCard key={eventIndex} event={event} onClick={onEventClick} />
+                                            ))}
                                         </div>
                                     </div>
                                 </div>
@@ -348,13 +384,38 @@ const CalendarView = ({ courses, pidd, promedioEsa, onEventClick }) => {
         </div>
     );
 };
+const HorarioCardComponent = ({ horario }) => {
+    const styles = getStatusStyles(horario.estadoHistorico);
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        try { return new Date(dateString).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric'}); } catch (e) { return 'Fecha inválida'; }
+    };
+    return(
+        <div className={`border-t border-gray-200 mt-3 pt-3 p-2 rounded-md ${styles.border} relative`}>
+             {horario.estadoHistorico && (
+                <div className="absolute top-2 right-2">
+                    <StatusBadge status={horario.estadoHistorico} />
+                </div>
+             )}
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm text-gray-600">
+                 <p><strong>Campus:</strong> {horario.campus || 'N/A'}</p>
+                 <p><strong>Aula:</strong> {horario.aula || 'N/A'}</p>
+                 <p><strong>Día:</strong> {horario.dia || 'N/A'}</p>
+                 <p><strong>Hora:</strong> {horario.hora || 'N/A'}</p>
+                 <p className="sm:col-span-2"><strong>Periodo:</strong> {formatDate(horario.fechaInicio)} - {formatDate(horario.fechaFin)}</p>
+             </div>
+        </div>
+    );
+};
 const TeacherDetailModal = ({ teacher, onClose }) => {
   const [activeTab, setActiveTab] = useState('calendar');
   const [selectedSchedule, setSelectedSchedule] = useState(null);
-  const { pidd, cursos, RolColaborador, promedioEsa, idDocente, programa, modalidad } = teacher;
+  const { pidd, cursos, RolColaborador, promedioEsa, idDocente, programa, modalidad, estadoHistorico } = teacher;
   const docenteNombre = teacher.docente || (pidd ? pidd.docente : `Docente ${idDocente}`);
-  const docenteCorreo = pidd ? pidd.correo : 'No disponible';
   const hasPiddCourse = pidd && pidd.nombreCurso;
+
+  const especialistaNombres = ["Ana Gómez", "Luis Fernández", "Carla Ruiz", "Juan Torres", "María López"];
+  const especialistaAsignado = useMemo(() => especialistaNombres[Math.floor(Math.random() * especialistaNombres.length)], [idDocente]);
 
   const TabButton = ({ tabName, label }) => (
     <button
@@ -378,14 +439,16 @@ const TeacherDetailModal = ({ teacher, onClose }) => {
                 <div className="flex items-start space-x-6 mb-5">
                     <div className="bg-blue-600 text-white rounded-full h-20 w-20 flex-shrink-0 flex items-center justify-center text-4xl font-bold">{docenteNombre.charAt(0)}</div>
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-800">{docenteNombre}</h1>
-                        <p className="text-md text-gray-500">{pidd ? pidd.cargo : 'Cargo no disponible'}</p>
-                         <div className="flex items-center mt-2 text-gray-600 text-sm space-x-2"><Mail size={16} /><span>{docenteCorreo}</span></div>
+                        <div className="flex items-center space-x-3">
+                            <h1 className="text-3xl font-bold text-gray-800">{docenteNombre}</h1>
+                            <StatusBadge status={estadoHistorico} />
+                        </div>
+                        <p className="text-md text-gray-500">{RolColaborador || 'Cargo no disponible'}</p>
                     </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
                     <InfoPill icon={<Shield size={14}/>} label="ID Docente" value={idDocente} />
-                    <InfoPill icon={<Briefcase size={14}/>} label="Rol Colaborador" value={RolColaborador} />
+                    <InfoPill icon={<Briefcase size={14}/>} label="Especialista Pedagógico" value={especialistaAsignado} />
                     <InfoPill icon={<Tag size={14}/>} label="Programa" value={programa} />
                     <InfoPill icon={<Tag size={14}/>} label="Modalidad" value={modalidad} />
                 </div>
@@ -404,29 +467,30 @@ const TeacherDetailModal = ({ teacher, onClose }) => {
                 {activeTab === 'details' && (
                     <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2 space-y-6">
-                            {hasPiddCourse && (
-                                <div>
-                                    <h3 className="text-2xl font-bold text-gray-700 border-b-2 border-amber-300 pb-2 mb-4">Curso en Plan de Mejora (PIDD)</h3>
-                                    <PiddCourseCard piddData={pidd} />
-                                </div>
-                            )}
+                            {hasPiddCourse && <PiddCourseCard piddData={pidd} />}
                             <div>
                                 <h3 className="text-2xl font-bold text-gray-700 border-b-2 border-blue-200 pb-2">Todos los Cursos Programados</h3>
-                                {cursos?.map((curso, i) => (
-                                    <div key={curso.seccion || i} className="bg-white p-6 rounded-2xl shadow-md mt-4">
+                                {cursos?.map((curso, i) => {
+                                  const cursoStyles = getStatusStyles(curso.estadoHistorico);
+                                  return(
+                                    <div key={curso.seccion || i} className={`p-6 rounded-2xl shadow-md mt-4 ${cursoStyles.background} ${cursoStyles.border}`}>
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <h4 className="text-xl font-semibold text-gray-800">{curso.nombreCurso}</h4>
-                                                <p className="text-sm text-gray-500 -mt-1 mb-3">Sección: {curso.seccion || 'No especificada'}</p>
+                                                <div className="flex items-center gap-3">
+                                                   <h4 className="text-xl font-semibold text-gray-800">{curso.nombreCurso}</h4>
+                                                   <StatusBadge status={curso.estadoHistorico} />
+                                                </div>
+                                                <p className="text-sm text-gray-500 mb-3">Sección: {curso.seccion || 'No especificada'}</p>
                                             </div>
                                             <div className="text-right text-xs">
                                                 <p><strong>Periodo:</strong> {curso.periodo}</p>
                                                 <p><strong>Met. Edu.:</strong> {curso.metEdu}</p>
                                             </div>
                                         </div>
-                                        {curso.horarios?.map((h, hi) => <HorarioCard key={hi} horario={h} />)}
+                                        {curso.horarios?.map((h, hi) => <HorarioCardComponent key={hi} horario={h} />)}
                                     </div>
-                                ))}
+                                  )
+                                })}
                             </div>
                         </div>
                         <aside className="space-y-6">
@@ -446,7 +510,7 @@ const TeacherDetailModal = ({ teacher, onClose }) => {
                     </main>
                 )}
                 {activeTab === 'calendar' && (
-                    <CalendarView courses={cursos} pidd={pidd} promedioEsa={promedioEsa} onEventClick={setSelectedSchedule} />
+                    <CalendarView courses={cursos} pidd={pidd} onEventClick={setSelectedSchedule} />
                 )}
             </div>
         </div>
@@ -456,29 +520,24 @@ const TeacherDetailModal = ({ teacher, onClose }) => {
   );
 };
 
-
 // --- Componente Principal ---
 export default function AssignmentsPage() {
     const [teachers, setTeachers] = useState([]);
     const [selectedTeacher, setSelectedTeacher] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [piddFilter, setPiddFilter] = useState('Todos');
+    const [statusFilter, setStatusFilter] = useState('Todos'); // NUEVO estado para el filtro de estado
     const [programFilter, setProgramFilter] = useState('Todos');
     const [modalityFilter, setModalityFilter] = useState('Todos');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
     
     const [periodoAsignacion, setPeriodoAsignacion] = useState('2025-1');
-    const [periodoRUD, setPeriodoRUD] = useState('2025-1');
-    const [periodoProgHoraria, setPeriodoProgHoraria] = useState('2025-1');
-    const [periodoESA, setPeriodoESA] = useState('2025-1');
-    const [periodoPIDD, setPeriodoPIDD] = useState('2025-1');
     
     const [isGenerating, setIsGenerating] = useState(false);
     const [generationStatus, setGenerationStatus] = useState({ message: '', progress: 0, error: false });
     const [isTableLoading, setIsTableLoading] = useState(true);
 
-    // --- NUEVOS ESTADOS PARA EL HISTORIAL ---
     const [showReport, setShowReport] = useState(false);
     const [isReportLoading, setIsReportLoading] = useState(false);
     const [reportError, setReportError] = useState(null);
@@ -487,7 +546,6 @@ export default function AssignmentsPage() {
     const [isProcessingDelete, setIsProcessingDelete] = useState(false);
     const [reportToDelete, setReportToDelete] = useState(null);
 
-    // --- DATOS Y FUNCIONES DEL HISTORIAL ---
     const mockReportData = {
         "2025-1": [
             { id: "rep1", fechaCarga: "15/06/2025", cantidad: 1250, ultimaActualizacion: new Date().toISOString() },
@@ -515,9 +573,6 @@ export default function AssignmentsPage() {
         setReportError(null);
         try {
             await new Promise(res => setTimeout(res, 1500));
-            // const response = await fetch('/api/asignaciones/historial');
-            // if (!response.ok) throw new Error("No se pudo cargar el historial.");
-            // const data = await response.json();
             setReportData(mockReportData);
         } catch (error) {
             setReportError(error.message);
@@ -540,13 +595,9 @@ export default function AssignmentsPage() {
 
     const handleConfirmDelete = async () => {
         if (!reportToDelete) return;
-
         setIsProcessingDelete(true);
         try {
             await new Promise(res => setTimeout(res, 1000));
-            // const response = await fetch(`/api/asignaciones/historial/${reportToDelete.id}`, { method: 'DELETE' });
-            // if (!response.ok) throw new Error("No se pudo eliminar el reporte.");
-
             const updatedData = { ...reportData };
             for (const semester in updatedData) {
                 const initialLength = updatedData[semester].length;
@@ -559,7 +610,6 @@ export default function AssignmentsPage() {
                 }
             }
             setReportData(updatedData);
-
         } catch (error) {
             console.error("Error al eliminar:", error);
             setReportError("No se pudo eliminar el registro. Intente de nuevo.");
@@ -580,7 +630,7 @@ export default function AssignmentsPage() {
     const fetchData = async () => {
         setIsTableLoading(true);
         try {
-            const response = await fetch('https://kali-ad-web.beesoftware.net/api/asignaciones');
+            const response = await fetch('https://kali-ad-web.beesoftware.net/api/asignaciones/latest');
             if (!response.ok) {
                 throw new Error(`Error en la API: ${response.status}`);
             }
@@ -588,7 +638,7 @@ export default function AssignmentsPage() {
             setTeachers(data.data || []);
         } catch (error) {
             console.error("Error al cargar los datos de docentes:", error);
-            setTeachers(initialApiData.data);
+            setTeachers(initialApiData.data || []);
         } finally {
             setIsTableLoading(false);
         }
@@ -622,9 +672,11 @@ export default function AssignmentsPage() {
                               (piddFilter === 'Sin PIDD' && teacher.pidd === null);
             const programMatch = programFilter === 'Todos' || teacher.programa === programFilter;
             const modalityMatch = modalityFilter === 'Todos' || teacher.modalidad === modalityFilter;
-            return searchTermMatch && piddMatch && programMatch && modalityMatch;
+            const statusMatch = statusFilter === 'Todos' || teacher.estadoHistorico === statusFilter;
+            
+            return searchTermMatch && piddMatch && programMatch && modalityMatch && statusMatch;
         });
-    }, [teachers, searchTerm, piddFilter, programFilter, modalityFilter]);
+    }, [teachers, searchTerm, piddFilter, programFilter, modalityFilter, statusFilter]);
   
     const paginatedTeachers = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -654,24 +706,40 @@ export default function AssignmentsPage() {
 
     const handleGenerate = async () => {
         setIsGenerating(true);
-        setGenerationStatus({ message: 'Iniciando proceso de limpieza...', progress: 0, error: false });
+        setGenerationStatus({ message: 'Iniciando proceso...', progress: 0, error: false });
 
         try {
             setGenerationStatus({ message: `Generando asignación para el periodo ${periodoAsignacion}...`, progress: 25, error: false });
-            const response = await fetch('https://kali-ad-web.beesoftware.net/api/sp-da002-limpiar');
+            
+            const response = await fetch('https://kali-ad-web.beesoftware.net/api/sp-da002-limpiar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ semestre: periodoAsignacion }),
+            });
 
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`La API respondió con un error ${response.status}: ${errorText || 'Sin detalles'}`);
+                let errorMessage = `La API respondió con un error ${response.status}`;
+                try {
+                    const errorJson = await response.json();
+                    errorMessage = errorJson.message || errorJson.error || errorMessage;
+                } catch (e) {
+                    const errorText = await response.text();
+                    errorMessage = errorText || errorMessage;
+                }
+                throw new Error(errorMessage);
             }
+
+            const result = await response.json();
             
-            setGenerationStatus({ message: 'Limpieza completada. Actualizando la lista de docentes...', progress: 75, error: false });
+            setGenerationStatus({ message: `Proceso completado. ${result.total || 0} registros procesados. Actualizando...`, progress: 75, error: false });
             await new Promise(res => setTimeout(res, 1500)); 
 
             await fetchData();
-            if (showReport) await fetchReportHistory(); // Actualizar historial si está abierto
+            if (showReport) await fetchReportHistory();
             
-            setGenerationStatus({ message: '¡Proceso completado con éxito!', progress: 100, error: false });
+            setGenerationStatus({ message: '¡Actualización completada con éxito!', progress: 100, error: false });
             await new Promise(res => setTimeout(res, 2000));
 
         } catch (error) {
@@ -702,39 +770,9 @@ export default function AssignmentsPage() {
                     <p className="text-lg text-gray-500 mt-1">Busca, visualiza y genera las asignaciones de los colaboradores.</p>
                 </header>
                 
-                {/* --- SECCIONES REORDENADAS --- */}
                 <div className="bg-white p-6 rounded-2xl shadow-md mb-6">
                     <h2 className="text-xl font-bold text-gray-800 mb-4">Generar Nueva Asignación</h2>
                     <fieldset disabled={isGenerating || isTableLoading} className="space-y-6">
-                        <div>
-                            <h3 className="text-md font-semibold text-gray-600 mb-2">Periodos de Origen de Datos</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <div>
-                                    <label htmlFor="rud-period" className="block text-sm font-medium text-gray-700 mb-1">RUD Periodo</label>
-                                    <select id="rud-period" value={periodoRUD} onChange={e => setPeriodoRUD(e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                                        {periodOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label htmlFor="ph-period" className="block text-sm font-medium text-gray-700 mb-1">Prog. Horaria Periodo</label>
-                                    <select id="ph-period" value={periodoProgHoraria} onChange={e => setPeriodoProgHoraria(e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                                        {periodOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label htmlFor="esa-period" className="block text-sm font-medium text-gray-700 mb-1">ESA Periodo</label>
-                                    <select id="esa-period" value={periodoESA} onChange={e => setPeriodoESA(e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                                        {periodOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label htmlFor="pidd-period" className="block text-sm font-medium text-gray-700 mb-1">PIDD Periodo</label>
-                                    <select id="pidd-period" value={periodoPIDD} onChange={e => setPeriodoPIDD(e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                                        {periodOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end bg-blue-50 p-6 rounded-xl border border-blue-200">
                             <div className="md:col-span-2">
                                 <label htmlFor="assignment-period" className="block text-sm font-medium text-blue-800 mb-1">
@@ -830,13 +868,21 @@ export default function AssignmentsPage() {
                             className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                         />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
                             <label htmlFor="pidd-filter" className="block text-sm font-medium text-gray-700 mb-1">Estado PIDD</label>
                             <select id="pidd-filter" value={piddFilter} onChange={e => handleFilterChange(setPiddFilter, e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg">
                                 <option value="Todos">Todos</option>
                                 <option value="Con PIDD">Con PIDD</option>
                                 <option value="Sin PIDD">Sin PIDD</option>
+                            </select>
+                        </div>
+                         <div>
+                            <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 mb-1">Estado Histórico</label>
+                            <select id="status-filter" value={statusFilter} onChange={e => handleFilterChange(setStatusFilter, e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg">
+                                <option value="Todos">Todos</option>
+                                <option value="NUEVO">Nuevo</option>
+                                <option value="MODIFICADO">Modificado</option>
                             </select>
                         </div>
                          <div>
@@ -874,12 +920,14 @@ export default function AssignmentsPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {paginatedTeachers.map((teacher) => (
-                                    <tr key={teacher._id || teacher.idDocente} className="bg-white border-b hover:bg-gray-50">
-                                        <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                                            <div className="flex items-center">
-                                                {teacher.pidd && <AlertTriangle className="text-amber-500 mr-2 flex-shrink-0" size={16} title="Este docente tiene un PIDD"/>}
-                                                {teacher.docente || (teacher.pidd ? teacher.pidd.docente : 'Nombre no disponible')}
+                                {paginatedTeachers.map((teacher) => {
+                                  const rowStyles = getStatusStyles(teacher.estadoHistorico);
+                                  return (
+                                    <tr key={teacher._id?.$oid || teacher.idDocente} className={`border-b hover:bg-gray-50 ${rowStyles.border}`}>
+                                        <td className={`px-6 py-4 font-medium text-gray-900 whitespace-nowrap`}>
+                                            <div className="flex items-center gap-2">
+                                                {teacher.estadoHistorico && <div className={`w-2.5 h-2.5 rounded-full ${teacher.estadoHistorico === 'NUEVO' ? 'bg-green-500' : 'bg-yellow-500'}`}></div>}
+                                                <span>{teacher.docente || (teacher.pidd ? teacher.pidd.docente : 'Nombre no disponible')}</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">{teacher.idDocente}</td>
@@ -896,7 +944,8 @@ export default function AssignmentsPage() {
                                             </button>
                                         </td>
                                     </tr>
-                                ))}
+                                  )
+                                })}
                             </tbody>
                         </table>
                     ) : (

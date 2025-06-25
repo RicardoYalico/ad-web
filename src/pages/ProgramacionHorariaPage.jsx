@@ -6,7 +6,7 @@ const API_BASE_URL = 'https://kali-ad-web.beesoftware.net/api/programacion-horar
 const BATCH_SIZE = 1000;
 
 const PROGRAMACION_HORARIA_API_KEYS = [
-    "semestre", "fechaProgramacion", "periodo", "campus", "facultad", "codDuenioCurso", "duenioCurso",
+    "semestre", "fechaCarga", "periodo", "campus", "facultad", "codDuenioCurso", "duenioCurso",
     "codCurso", "nombreCurso", "hrsPlanCurso", "nrc", "seccion",
     "estatus", "lstCrz", "origenLstCrz", "sobrepasoAula", "tipHor", "metEdu",
     "maximo", "real", "restante", "hrsCredito", "idDocente", "idRrhh",
@@ -57,7 +57,7 @@ const ProgramacionHorariaPage = () => {
     const [reportError, setReportError] = useState(null);
     const [showReport, setShowReport] = useState(false);
     const [expandedSemesters, setExpandedSemesters] = useState({});
-    const [deleteConfirmation, setDeleteConfirmation] = useState(null); // { semestre, fechaProgramacion }
+    const [deleteConfirmation, setDeleteConfirmation] = useState(null); // { semestre, fechaCarga }
 
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
@@ -86,7 +86,7 @@ const ProgramacionHorariaPage = () => {
                 return acc;
             }, {});
             for (const semestre in grouped) {
-                grouped[semestre].sort((a, b) => new Date(b.fechaProgramacion) - new Date(a.fechaProgramacion));
+                grouped[semestre].sort((a, b) => new Date(b.fechaCarga) - new Date(a.fechaCarga));
             }
             const orderedGroupedData = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
                 .reduce((obj, key) => { (obj[key] = grouped[key]); return obj; }, {});
@@ -172,9 +172,9 @@ const ProgramacionHorariaPage = () => {
             const validPayloads = parsedData.map(({ record: rawRecord }) => {
                 const hasData = Object.values(rawRecord).some(value => value !== null && String(value).trim() !== '');
                 if (!hasData) return null;
-                const payload = { semestre: selectedSemester, fechaProgramacion: programmingDate };
+                const payload = { semestre: selectedSemester, fechaCarga: programmingDate };
                 PROGRAMACION_HORARIA_API_KEYS.forEach(apiKey => {
-                    if (apiKey !== 'semestre' && apiKey !== 'fechaProgramacion') {
+                    if (apiKey !== 'semestre' && apiKey !== 'fechaCarga') {
                         payload[apiKey] = rawRecord[apiKey] !== undefined && rawRecord[apiKey] !== null ? String(rawRecord[apiKey]).trim() : '';
                     }
                 });
@@ -224,21 +224,21 @@ const ProgramacionHorariaPage = () => {
         if (!deleteConfirmation) return;
 
         setIsProcessing(true);
-        setProcessStatus(`Eliminando reporte del ${deleteConfirmation.fechaProgramacion}...`);
+        setProcessStatus(`Eliminando reporte del ${deleteConfirmation.fechaCarga}...`);
         try {
             const response = await fetch(`${API_BASE_URL}/bulk`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     semestre: deleteConfirmation.semestre,
-                    fechaCarga: deleteConfirmation.fechaProgramacion
+                    fechaCarga: deleteConfirmation.fechaCarga
                 })
             });
             if (!response.ok && response.status !== 404) {
                  const errorData = await response.json();
                  throw new Error(errorData.message || 'Error del servidor');
             }
-            setUploadSuccess(`Reporte del ${deleteConfirmation.fechaProgramacion} eliminado.`);
+            setUploadSuccess(`Reporte del ${deleteConfirmation.fechaCarga} eliminado.`);
             fetchReport();
         } catch (err) {
             setUploadError(`Error al eliminar: ${err.message}`);
@@ -281,7 +281,7 @@ const ProgramacionHorariaPage = () => {
     const handleDownloadTemplate = async () => {
         try {
             const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.2/package/xlsx.mjs');
-            const templateHeaders = PROGRAMACION_HORARIA_API_KEYS.filter(k => k !== 'semestre' && k !== 'fechaProgramacion');
+            const templateHeaders = PROGRAMACION_HORARIA_API_KEYS.filter(k => k !== 'semestre' && k !== 'fechaCarga');
             const ws = XLSX.utils.aoa_to_sheet([templateHeaders]);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Plantilla");
@@ -323,7 +323,7 @@ const ProgramacionHorariaPage = () => {
             {deleteConfirmation && (
                 <ConfirmationModal 
                     title="Confirmar Eliminación"
-                    message={`¿Está seguro de que desea eliminar todos los registros del semestre ${deleteConfirmation.semestre} para la fecha de programación ${deleteConfirmation.fechaProgramacion}? Esta acción no se puede deshacer.`}
+                    message={`¿Está seguro de que desea eliminar todos los registros del semestre ${deleteConfirmation.semestre} para la fecha de programación ${deleteConfirmation.fechaCarga}? Esta acción no se puede deshacer.`}
                     onConfirm={confirmDeleteReport}
                     onCancel={() => setDeleteConfirmation(null)}
                 />
@@ -412,7 +412,7 @@ const ProgramacionHorariaPage = () => {
                                             <h3 className="text-xl font-semibold text-gray-800 mb-3">Semestre: {semestre}</h3>
                                             <div className="relative bg-blue-50 border-l-4 border-blue-500 rounded-r-lg p-4 mb-4 shadow">
                                                 <p className="font-bold text-blue-800">Carga más reciente</p>
-                                                <p><span className="font-semibold">Fecha Programación:</span> {mostRecent.fechaProgramacion}</p>
+                                                <p><span className="font-semibold">Fecha Programación:</span> {mostRecent.fechaCarga}</p>
                                                 <p><span className="font-semibold">Registros:</span> {mostRecent.cantidad.toLocaleString()}</p>
                                                 <p className="text-sm text-gray-600 mt-1">Actualizado: {formatDateTime(mostRecent.ultimaActualizacion)}</p>
                                                 <button onClick={() => handleDeleteReportClick(mostRecent)} className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-100 transition-colors"><Trash2 size={16}/></button>
@@ -428,7 +428,7 @@ const ProgramacionHorariaPage = () => {
                                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                                             {olderReports.map((item, index) => (
                                                                 <div key={index} className="relative bg-gray-50 border rounded-lg p-3 text-sm">
-                                                                    <p className="font-bold">{item.fechaProgramacion}</p>
+                                                                    <p className="font-bold">{item.fechaCarga}</p>
                                                                     <p>Registros: {item.cantidad.toLocaleString()}</p>
                                                                     <p className="text-xs text-gray-500 mt-1">Actualizado: {formatDateTime(item.ultimaActualizacion)}</p>
                                                                     <button onClick={() => handleDeleteReportClick(item)} className="absolute top-1 right-1 p-1 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-100 transition-colors"><Trash2 size={14}/></button>
