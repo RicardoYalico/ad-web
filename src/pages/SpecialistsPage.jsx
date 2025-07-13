@@ -52,21 +52,6 @@ const formatFranja = (franja) => {
     return franja;
 };
 
-// --- DATOS DE DEMO ---
-const mockUsuarios = [
-    { id: 'user1', apellidosNombresCompletos: 'GARCIA PEREZ, JUAN CARLOS', dni: '12345678', preferenciaHorarios: 'Lunes 07:00-10:00, Lunes 11:30-12:30, Miércoles (AM), Viernes 1400-1600', sedePreferida: 'Central', email: 'juan.garcia@example.com', telefono: '987654321' },
-    { id: 'user2', apellidosNombresCompletos: 'LOPEZ TORRES, MARIA ELENA', dni: '87654321', preferenciaHorarios: 'Martes y Jueves (Todo el día)', sedePreferida: 'Norte', email: 'maria.lopez@example.com', telefono: '912345678' },
-    { id: 'user3', apellidosNombresCompletos: 'MARTINEZ ROJAS, PEDRO LUIS', dni: '11223344', preferenciaHorarios: 'Viernes (PM) y Sábados 0900-1300', sedePreferida: 'Sur', email: 'pedro.martinez@example.com', telefono: '998877665' },
-    { id: 'user4', apellidosNombresCompletos: 'SANCHEZ DIAZ, ANA SOFIA', dni: '44556677', preferenciaHorarios: 'Lunes a Viernes (Interdiario PM)', sedePreferida: 'Central', email: 'ana.sanchez@example.com', telefono: '965432109' },
-    { id: 'user5', apellidosNombresCompletos: 'FLORES QUISPE, ROSA ISABEL', dni: '22334455', preferenciaHorarios: 'Miércoles (Todo el día), Jueves 10:00-12:30 y 14:00-16:00', sedePreferida: 'Este', email: 'rosa.flores@example.com', telefono: '955512345' },
-];
-
-const mockDisponibilidadesIniciales = [
-    { id: 'disp1', userId: 'user1', horasDisponiblesParaRealizarAcompaniamientoPresencial: 2, horasDisponiblesParaRealizarAcompaniamientoRemoto: 0, sede1DePreferenciaPresencial: 'Central', dia: 'LUNES', franja: '0800-1000', hora: '08:00', turno: 'MAÑANA' },
-    { id: 'disp2', userId: 'user1', horasDisponiblesParaRealizarAcompaniamientoPresencial: 0, horasDisponiblesParaRealizarAcompaniamientoRemoto: 3, sede1DePreferenciaPresencial: 'Remoto', dia: 'MIERCOLES', franja: '0900-1200', hora: '09:00', turno: 'MAÑANA' },
-    { id: 'disp3', userId: 'user2', horasDisponiblesParaRealizarAcompaniamientoPresencial: 4, horasDisponiblesParaRealizarAcompaniamientoRemoto: 0, sede1DePreferenciaPresencial: 'Norte', dia: 'MARTES', franja: '1400-1800', hora: '14:00', turno: 'TARDE' },
-];
-
 
 // --- COMPONENTES ---
 
@@ -143,15 +128,15 @@ const EditAvailabilityModal = ({ isOpen, onClose, record, onSave, onDelete }) =>
                 <div className="space-y-4">
                     <p className="text-sm"><strong>Día:</strong> {editableRecord.dia}</p>
                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label htmlFor="edit-avail-franjaInicio" className="block text-xs font-medium text-gray-700">Hora Inicio (HHMM)*</label>
-                            <input type="text" id="edit-avail-franjaInicio" name="franjaInicio" value={franjaInicio} onChange={handleChange} placeholder="0800" className="mt-1 input-style py-2"/>
-                        </div>
-                        <div>
-                            <label htmlFor="edit-avail-franjaFin" className="block text-xs font-medium text-gray-700">Hora Fin (HHMM)*</label>
-                            <input type="text" id="edit-avail-franjaFin" name="franjaFin" value={franjaFin} onChange={handleChange} placeholder="1030" className="mt-1 input-style py-2"/>
-                        </div>
-                    </div>
+                         <div>
+                             <label htmlFor="edit-avail-franjaInicio" className="block text-xs font-medium text-gray-700">Hora Inicio (HHMM)*</label>
+                             <input type="text" id="edit-avail-franjaInicio" name="franjaInicio" value={franjaInicio} onChange={handleChange} placeholder="0800" className="mt-1 input-style py-2"/>
+                         </div>
+                         <div>
+                             <label htmlFor="edit-avail-franjaFin" className="block text-xs font-medium text-gray-700">Hora Fin (HHMM)*</label>
+                             <input type="text" id="edit-avail-franjaFin" name="franjaFin" value={franjaFin} onChange={handleChange} placeholder="1030" className="mt-1 input-style py-2"/>
+                         </div>
+                     </div>
                     <div>
                         <label htmlFor="edit-avail-sede" className="block text-xs font-medium text-gray-700">Sede*</label>
                         <input type="text" id="edit-avail-sede" name="sede1DePreferenciaPresencial" value={editableRecord.sede1DePreferenciaPresencial} onChange={handleChange} className="mt-1 input-style py-2"/>
@@ -163,9 +148,9 @@ const EditAvailabilityModal = ({ isOpen, onClose, record, onSave, onDelete }) =>
                         </select>
                     </div>
                      <div>
-                        <label htmlFor="edit-avail-hpres" className="block text-xs font-medium text-gray-700">Horas Presencial (ej: 2.5)</label>
-                        <input type="number" id="edit-avail-hpres" name="horasDisponiblesParaRealizarAcompaniamientoPresencial" value={editableRecord.horasDisponiblesParaRealizarAcompaniamientoPresencial} onChange={handleChange} min="0" step="0.5" className="mt-1 input-style py-2"/>
-                    </div>
+                         <label htmlFor="edit-avail-hpres" className="block text-xs font-medium text-gray-700">Horas Presencial (ej: 2.5)</label>
+                         <input type="number" id="edit-avail-hpres" name="horasDisponiblesParaRealizarAcompaniamientoPresencial" value={editableRecord.horasDisponiblesParaRealizarAcompaniamientoPresencial} onChange={handleChange} min="0" step="0.5" className="mt-1 input-style py-2"/>
+                     </div>
                     <div>
                         <label htmlFor="edit-avail-hrem" className="block text-xs font-medium text-gray-700">Horas Remoto (ej: 1.5)</label>
                         <input type="number" id="edit-avail-hrem" name="horasDisponiblesParaRealizarAcompaniamientoRemoto" value={editableRecord.horasDisponiblesParaRealizarAcompaniamientoRemoto} onChange={handleChange} min="0" step="0.5" className="mt-1 input-style py-2"/>
@@ -291,7 +276,7 @@ const WeeklyScheduleModal = ({ isOpen, onClose, teacher, records, onEditSlot, on
         const schedule = {};
         DIAS_SEMANA_ORDEN.forEach(dia => schedule[dia] = []);
         teacherRecords.forEach(r => {
-            const diaKey = r.dia.toUpperCase();
+            const diaKey = (r.dia || '').toUpperCase();
             if (schedule[diaKey]) {
                 schedule[diaKey].push(r);
             }
@@ -330,7 +315,7 @@ const WeeklyScheduleModal = ({ isOpen, onClose, teacher, records, onEditSlot, on
                         <div className="flex-grow grid grid-cols-7 gap-px bg-gray-200 border-t border-l border-gray-200 rounded-tr-lg">
                             {DIAS_SEMANA_ORDEN.map(dia => (<div key={`header-day-${dia}`} className="h-10 bg-gray-100 p-1.5 text-center text-xs sm:text-sm font-semibold text-gray-600 capitalize border-r border-b border-gray-200 flex items-center justify-center">{dia.substring(0,3)}</div>))}
                             {DIAS_SEMANA_ORDEN.map((dia) => (
-                               <div key={`${dia}-slots-col`} className="relative bg-white border-r border-b border-gray-200">
+                                <div key={`${dia}-slots-col`} className="relative bg-white border-r border-b border-gray-200">
                                     {calendarTimeLabels.map((timeLabel, timeIdx) => (<div key={`bg-line-${dia}-${timeIdx}`} className="h-10 border-b border-gray-100 cursor-pointer hover:bg-teal-50" onClick={(e) => { e.stopPropagation(); onEmptyCellClick(dia, timeLabel); }}></div>))}
                                     {(teacherSchedule[dia] || []).map(slot => {
                                         if (!slot.franja || !slot.franja.includes('-')) return null;
@@ -350,10 +335,10 @@ const WeeklyScheduleModal = ({ isOpen, onClose, teacher, records, onEditSlot, on
                                                      title={`Clic para editar: ${formatFranja(slot.franja)}\nSede: ${slot.sede1DePreferenciaPresencial}`}
                                                      onClick={(e) => { e.stopPropagation(); onEditSlot(slot.id); }} 
                                                      >
-                                                     <div className="font-bold text-[11px] sm:text-sm truncate">{formatFranja(slot.franja)}</div>
-                                                     {presencialHoras > 0 && <div className="flex items-center text-[10px] sm:text-xs"><Briefcase size={window.innerWidth < 640 ? 10:12} className="mr-0.5 sm:mr-1"/> P: {presencialHoras}h</div>}
-                                                     {remotoHoras > 0 && <div className="flex items-center text-[10px] sm:text-xs"><Home size={window.innerWidth < 640 ? 10:12} className="mr-0.5 sm:mr-1"/> R: {remotoHoras}h</div>}
-                                                     <div className="text-[9px] sm:text-[10px] text-gray-600 truncate mt-0.5">{slot.sede1DePreferenciaPresencial}</div>
+                                                    <div className="font-bold text-[11px] sm:text-sm truncate">{formatFranja(slot.franja)}</div>
+                                                    {presencialHoras > 0 && <div className="flex items-center text-[10px] sm:text-xs"><Briefcase size={window.innerWidth < 640 ? 10:12} className="mr-0.5 sm:mr-1"/> P: {presencialHoras}h</div>}
+                                                    {remotoHoras > 0 && <div className="flex items-center text-[10px] sm:text-xs"><Home size={window.innerWidth < 640 ? 10:12} className="mr-0.5 sm:mr-1"/> R: {remotoHoras}h</div>}
+                                                    <div className="text-[9px] sm:text-[10px] text-gray-600 truncate mt-0.5">{slot.sede1DePreferenciaPresencial}</div>
                                                </div>);
                                     })}
                                 </div>
@@ -372,38 +357,100 @@ const GeneralScheduleModal = ({ isOpen, onClose, allDisponibilidades, usuarios }
     if (!isOpen) return null; 
     const [selectedSlotDetails, setSelectedSlotDetails] = useState(null);
     
-    const aggregatedSchedule = useMemo(() => { const density = {}; DIAS_SEMANA_ORDEN.forEach(dia => { density[dia] = {}; calendarTimeLabels.forEach(ts_label => { density[dia][ts_label] = { count: 0, specialistsDetails: [] }; }); }); allDisponibilidades.forEach(disp => { const usuario = usuarios.find(u => u.id === disp.userId); if (!usuario) return;  const diaKey = disp.dia.toUpperCase(); if (!DIAS_SEMANA_ORDEN.includes(diaKey)) return; if (disp.franja && disp.franja.includes('-')) { const [startStr, endStr] = disp.franja.split('-').map(s => s.trim()); const startMinutesTotal = timeStringToTotalMinutes(startStr); const endMinutesTotal = timeStringToTotalMinutes(endStr); if (startMinutesTotal === -1 || endMinutesTotal === -1 || startMinutesTotal >= endMinutesTotal) return; calendarTimeLabels.forEach((ts_label, timeIdx) => { const slotStartTotalMinutes = (CALENDAR_TIME_SLOTS_START_HOUR * 60) + timeIdx * 30; const slotEndTotalMinutes = slotStartTotalMinutes + 30; if (slotStartTotalMinutes < endMinutesTotal && slotEndTotalMinutes > startMinutesTotal) { density[diaKey][ts_label].count++; density[diaKey][ts_label].specialistsDetails.push({ id: disp.id, nombre: usuario.apellidosNombresCompletos, dni: usuario.dni, franja: disp.franja, sede: disp.sede1DePreferenciaPresencial, turno: disp.turno, hPresencial: disp.horasDisponiblesParaRealizarAcompaniamientoPresencial || 0, hRemoto: disp.horasDisponiblesParaRealizarAcompaniamientoRemoto || 0, }); } }); }}); return density; }, [allDisponibilidades, usuarios]);
+    const aggregatedSchedule = useMemo(() => { const density = {}; DIAS_SEMANA_ORDEN.forEach(dia => { density[dia] = {}; calendarTimeLabels.forEach(ts_label => { density[dia][ts_label] = { count: 0, specialistsDetails: [] }; }); }); allDisponibilidades.forEach(disp => { const usuario = usuarios.find(u => u.id === disp.userId); if (!usuario) return;  const diaKey = (disp.dia || '').toUpperCase(); if (!DIAS_SEMANA_ORDEN.includes(diaKey)) return; if (disp.franja && disp.franja.includes('-')) { const [startStr, endStr] = disp.franja.split('-').map(s => s.trim()); const startMinutesTotal = timeStringToTotalMinutes(startStr); const endMinutesTotal = timeStringToTotalMinutes(endStr); if (startMinutesTotal === -1 || endMinutesTotal === -1 || startMinutesTotal >= endMinutesTotal) return; calendarTimeLabels.forEach((ts_label, timeIdx) => { const slotStartTotalMinutes = (CALENDAR_TIME_SLOTS_START_HOUR * 60) + timeIdx * 30; const slotEndTotalMinutes = slotStartTotalMinutes + 30; if (slotStartTotalMinutes < endMinutesTotal && slotEndTotalMinutes > startMinutesTotal) { density[diaKey][ts_label].count++; density[diaKey][ts_label].specialistsDetails.push({ id: disp.id, nombre: usuario.apellidosNombresCompletos, dni: usuario.dni, franja: disp.franja, sede: disp.sede1DePreferenciaPresencial, turno: disp.turno, hPresencial: disp.horasDisponiblesParaRealizarAcompaniamientoPresencial || 0, hRemoto: disp.horasDisponiblesParaRealizarAcompaniamientoRemoto || 0, }); } }); }}); return density; }, [allDisponibilidades, usuarios]);
     
     const getColorForCount = (count) => { if (count === 0) return 'bg-gray-100/50 hover:bg-gray-200/70'; if (count === 1) return 'bg-teal-100 hover:bg-teal-200'; if (count <= 3) return 'bg-teal-200 hover:bg-teal-300'; if (count <= 5) return 'bg-teal-300 hover:bg-teal-400'; if (count <= 7) return 'bg-teal-400 hover:bg-teal-500'; return 'bg-teal-500 hover:bg-teal-600';};
     const handleCellClick = (day, timeLabel, data) => { if (data.count > 0) setSelectedSlotDetails({ day, timeLabel, specialists: data.specialistsDetails }); else setSelectedSlotDetails(null); };
     
-    return ( <div className="fixed inset-0 bg-black bg-opacity-75 backdrop-blur-lg flex justify-center items-center p-4 z-[60] transition-opacity duration-300 ease-in-out" style={{ opacity: isOpen ? 1 : 0, pointerEvents: isOpen ? 'auto' : 'none' }} onClick={onClose}> <div className="bg-gradient-to-br from-white to-gray-100 p-5 rounded-xl shadow-2xl max-w-[95vw] xl:max-w-7xl w-full max-h-[95vh] flex flex-col transform transition-all duration-300 ease-in-out" style={{ opacity: isOpen ? 1 : 0, transform: isOpen ? 'translateY(0)' : 'translateY(-20px)' }} onClick={(e) => e.stopPropagation()}> <div className="flex justify-between items-center mb-5 pb-4 border-b border-gray-300"> <h3 className="text-3xl font-bold text-gray-800 flex items-center"><UsersRound size={32} className="mr-3 text-teal-600"/>Horario General</h3> <button onClick={onClose} className="text-gray-400 hover:text-red-600 p-1 rounded-full hover:bg-red-100 transition-colors"><XCircle size={32} /></button> </div> <div className="flex flex-grow overflow-hidden gap-x-4"> <div className="flex-grow overflow-auto custom-scrollbar pr-2 -mr-2 relative"> <div className="flex sticky top-0 z-20 bg-gray-200/80 backdrop-blur-sm"><div className="w-16 sm:w-20 shrink-0 p-2.5 border-b border-r border-gray-300"></div>{DIAS_SEMANA_ORDEN.map(dia => (<div key={`header-${dia}`} className="flex-1 p-2.5 text-center text-xs sm:text-sm font-semibold text-gray-700 capitalize border-b border-r border-gray-300">{dia.toLowerCase()}</div>))}</div> <div className="flex"> <div className="w-16 sm:w-20 shrink-0">{calendarTimeLabels.map(label => (<div key={`time-label-gen-${label}`} className="h-8 flex items-center justify-end pr-1 text-xs text-gray-500 border-r border-b border-gray-300">{label}</div>))}</div> <div className="flex-grow grid grid-cols-7 gap-px bg-gray-300 border-b border-r border-gray-300">{DIAS_SEMANA_ORDEN.map(dia => (<div key={`col-gen-${dia}`} className="relative">{calendarTimeLabels.map((ts_label) => { const slotData = aggregatedSchedule[dia]?.[ts_label] || { count: 0, specialistsDetails: [] }; const bgColor = getColorForCount(slotData.count); return (<div key={`${dia}-${ts_label}-gen`} className={`h-8 flex items-center justify-center text-xs font-medium border-b border-r border-gray-200/50 bg-white transition-all duration-150 ease-in-out ${bgColor} ${slotData.count > 0 ? 'cursor-pointer' : 'cursor-default'}`} onClick={() => handleCellClick(dia, ts_label, slotData)} title={`${ts_label}: ${slotData.count} especialista(s)`}>{slotData.count > 0 ? slotData.count : ''}</div>); })}</div>))}</div></div> </div> <div className={`flex-shrink-0 bg-white p-4 rounded-lg shadow-lg overflow-y-auto custom-scrollbar transition-all duration-300 ease-in-out ${selectedSlotDetails ? 'w-full md:w-1/3 lg:w-1/4 xl:w-1/5 opacity-100' : 'w-0 opacity-0'}`} style={{pointerEvents: selectedSlotDetails ? 'auto' : 'none'}}> {selectedSlotDetails ? (<><h4 className="text-lg font-semibold text-teal-700 mb-1 capitalize">{selectedSlotDetails.day.toLowerCase()}</h4><p className="text-2xl font-bold text-gray-700 mb-3">{selectedSlotDetails.timeLabel}</p><p className="text-sm text-gray-600 mb-3 border-b pb-3">{selectedSlotDetails.specialists.length} especialista(s):</p><ul className="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1">{selectedSlotDetails.specialists.map((esp, idx) => (<li key={esp.id + idx} className="p-2.5 bg-gray-50 rounded-md shadow-sm border border-gray-200 hover:shadow-md transition-shadow"><p className="font-semibold text-sm text-teal-600">{esp.nombre}</p><p className="text-xs text-gray-500">DNI: {esp.dni}</p><p className="text-xs text-gray-500">Sede: {esp.sede}</p><p className="text-xs text-gray-500">Franja: {formatFranja(esp.franja)}</p>{esp.hPresencial > 0 && <p className="text-xs text-green-600 flex items-center"><Briefcase size={12} className="mr-1"/> P: {esp.hPresencial}h</p>}{esp.hRemoto > 0 && <p className="text-xs text-blue-600 flex items-center"><Home size={12} className="mr-1"/> R: {esp.hRemoto}h</p>}</li>))}</ul></>) : (<div className="flex flex-col items-center justify-center h-full text-center text-gray-400 whitespace-nowrap"><SlidersHorizontal size={40} className="mb-3"/><p className="text-sm">Clic en celda</p><p className="text-xs">para ver detalles.</p></div>)} </div> </div> <p className="mt-4 text-xs text-gray-500 italic">Colores indican densidad. Horario de 07:00 a 22:00.</p> </div> </div> );
+    return ( <div className="fixed inset-0 bg-black bg-opacity-75 backdrop-blur-lg flex justify-center items-center p-4 z-[60] transition-opacity duration-300 ease-in-out" style={{ opacity: isOpen ? 1 : 0, pointerEvents: isOpen ? 'auto' : 'none' }} onClick={onClose}> <div className="bg-gradient-to-br from-white to-gray-100 p-5 rounded-xl shadow-2xl max-w-[95vw] w-full max-h-[95vh] flex flex-col transform transition-all duration-300 ease-in-out" style={{ opacity: isOpen ? 1 : 0, transform: isOpen ? 'translateY(0)' : 'translateY(-20px)' }} onClick={(e) => e.stopPropagation()}> <div className="flex justify-between items-center mb-5 pb-4 border-b border-gray-300"> <h3 className="text-3xl font-bold text-gray-800 flex items-center"><UsersRound size={32} className="mr-3 text-teal-600"/>Horario General</h3> <button onClick={onClose} className="text-gray-400 hover:text-red-600 p-1 rounded-full hover:bg-red-100 transition-colors"><XCircle size={32} /></button> </div> <div className="flex flex-grow overflow-hidden gap-x-4"> <div className="flex-grow overflow-auto custom-scrollbar pr-2 -mr-2 relative"> <div className="flex sticky top-0 z-20 bg-gray-200/80 backdrop-blur-sm"><div className="w-16 sm:w-20 shrink-0 p-2.5 border-b border-r border-gray-300"></div>{DIAS_SEMANA_ORDEN.map(dia => (<div key={`header-${dia}`} className="flex-1 p-2.5 text-center text-xs sm:text-sm font-semibold text-gray-700 capitalize border-b border-r border-gray-300">{dia.toLowerCase()}</div>))}</div> <div className="flex"> <div className="w-16 sm:w-20 shrink-0">{calendarTimeLabels.map(label => (<div key={`time-label-gen-${label}`} className="h-8 flex items-center justify-end pr-1 text-xs text-gray-500 border-r border-b border-gray-300">{label}</div>))}</div> <div className="flex-grow grid grid-cols-7 gap-px bg-gray-300 border-b border-r border-gray-300">{DIAS_SEMANA_ORDEN.map(dia => (<div key={`col-gen-${dia}`} className="relative">{calendarTimeLabels.map((ts_label) => { const slotData = aggregatedSchedule[dia]?.[ts_label] || { count: 0, specialistsDetails: [] }; const bgColor = getColorForCount(slotData.count); return (<div key={`${dia}-${ts_label}-gen`} className={`h-8 flex items-center justify-center text-xs font-medium border-b border-r border-gray-200/50 bg-white transition-all duration-150 ease-in-out ${bgColor} ${slotData.count > 0 ? 'cursor-pointer' : 'cursor-default'}`} onClick={() => handleCellClick(dia, ts_label, slotData)} title={`${ts_label}: ${slotData.count} especialista(s)`}>{slotData.count > 0 ? slotData.count : ''}</div>); })}</div>))}</div></div> </div> <div className={`flex-shrink-0 bg-white p-4 rounded-lg shadow-lg overflow-y-auto custom-scrollbar transition-all duration-300 ease-in-out ${selectedSlotDetails ? 'w-full md:w-1/3 lg:w-1/4 xl:w-1/5 opacity-100' : 'w-0 opacity-0'}`} style={{pointerEvents: selectedSlotDetails ? 'auto' : 'none'}}> {selectedSlotDetails ? (<><h4 className="text-lg font-semibold text-teal-700 mb-1 capitalize">{selectedSlotDetails.day.toLowerCase()}</h4><p className="text-2xl font-bold text-gray-700 mb-3">{selectedSlotDetails.timeLabel}</p><p className="text-sm text-gray-600 mb-3 border-b pb-3">{selectedSlotDetails.specialists.length} especialista(s):</p><ul className="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1">{selectedSlotDetails.specialists.map((esp, idx) => (<li key={esp.id + idx} className="p-2.5 bg-gray-50 rounded-md shadow-sm border border-gray-200 hover:shadow-md transition-shadow"><p className="font-semibold text-sm text-teal-600">{esp.nombre}</p><p className="text-xs text-gray-500">DNI: {esp.dni}</p><p className="text-xs text-gray-500">Sede: {esp.sede}</p><p className="text-xs text-gray-500">Franja: {formatFranja(esp.franja)}</p>{esp.hPresencial > 0 && <p className="text-xs text-green-600 flex items-center"><Briefcase size={12} className="mr-1"/> P: {esp.hPresencial}h</p>}{esp.hRemoto > 0 && <p className="text-xs text-blue-600 flex items-center"><Home size={12} className="mr-1"/> R: {esp.hRemoto}h</p>}</li>))}</ul></>) : (<div className="flex flex-col items-center justify-center h-full text-center text-gray-400 whitespace-nowrap"><SlidersHorizontal size={40} className="mb-3"/><p className="text-sm">Clic en celda</p><p className="text-xs">para ver detalles.</p></div>)} </div> </div> <p className="mt-4 text-xs text-gray-500 italic">Colores indican densidad. Horario de 07:00 a 22:00.</p> </div> </div> );
 };
 
 
 const DisponibilidadAcompaniamientoPage = () => {
-    const [disponibilidadRecords, setDisponibilidadRecords] = useState(mockDisponibilidadesIniciales);
-    const [usuarios] = useState(mockUsuarios);
+    const [disponibilidadRecords, setDisponibilidadRecords] = useState([]);
+    const [usuarios, setUsuarios] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(15);
+    const [itemsPerPage] = useState(10);
     const [isIndividualScheduleModalOpen, setIsIndividualScheduleModalOpen] = useState(false);
     const [selectedTeacherForIndividualSchedule, setSelectedTeacherForIndividualSchedule] = useState(null);
     const [isGeneralScheduleModalOpen, setIsGeneralScheduleModalOpen] = useState(false);
     const [editingRecord, setEditingRecord] = useState(null); 
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                const response = await fetch('https://kali-ad-web.beesoftware.net/api/disponibilidad-acompaniamiento');
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+                const rawData = await response.json();
+
+                if (!Array.isArray(rawData)) {
+                    throw new Error("El formato de la respuesta de la API no es un array como se esperaba.");
+                }
+
+                const usersMap = new Map();
+                const processedRecords = rawData.map(item => {
+                    if (!item || !item.dni) {
+                        return null; // Omitir registros inválidos
+                    }
+
+                    const userDNI = String(item.dni);
+                    if (!usersMap.has(userDNI)) {
+                        usersMap.set(userDNI, {
+                            id: userDNI,
+                            apellidosNombresCompletos: item.apellidosNombresCompletos || 'Nombre no disponible',
+                            dni: userDNI,
+                            preferenciaHorarios: 'Ver horario detallado.', // Valor por defecto
+                            sedePreferida: 'Varias', // Valor por defecto
+                        });
+                    }
+                    
+                    return {
+                        id: item._id,
+                        userId: userDNI,
+                        apellidosNombresCompletos: item.apellidosNombresCompletos || 'Nombre no disponible',
+                        dni: userDNI,
+                        horasDisponiblesParaRealizarAcompaniamientoPresencial: parseFloat(item.horasDisponiblesParaRealizarAcompaniamientoPresencial) || 0,
+                        horasDisponiblesParaRealizarAcompaniamientoRemoto: 0, // La API no provee este campo
+                        sede1DePreferenciaPresencial: item.sede1DePreferenciaPresencial || '',
+                        dia: (item.dia || '').toUpperCase(),
+                        franja: (item.franja || '').replace(/\s/g, ''),
+                        hora: item.hora || '',
+                        turno: item.turno || ''
+                    };
+                }).filter(Boolean); // Filtrar registros nulos
+
+                setUsuarios(Array.from(usersMap.values()));
+                setDisponibilidadRecords(processedRecords);
+
+            } catch (e) {
+                console.error("Fallo al obtener los datos:", e);
+                setError("No se pudo cargar la información de disponibilidad. Por favor, recargue la página.");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
     
     const clearMessages = useCallback(() => { setError(null); setSuccessMessage(null); }, []);
-    useEffect(() => { if (successMessage || error) { const timer = setTimeout(() => { clearMessages(); }, 3000); return () => clearTimeout(timer); } }, [successMessage, error, clearMessages]);
+    useEffect(() => { if (successMessage || error) { const timer = setTimeout(() => { clearMessages(); }, 4000); return () => clearTimeout(timer); } }, [successMessage, error, clearMessages]);
 
     const filteredUsers = useMemo(() => {
         let filtered = usuarios;
         if (searchTerm) {
             const lowerSearchTerm = searchTerm.toLowerCase();
             filtered = usuarios.filter(user =>
-                user.apellidosNombresCompletos.toLowerCase().includes(lowerSearchTerm) ||
-                user.dni.toLowerCase().includes(lowerSearchTerm)
+                (user.apellidosNombresCompletos || '').toLowerCase().includes(lowerSearchTerm) ||
+                (user.dni || '').toLowerCase().includes(lowerSearchTerm)
             );
         }
         return filtered;
@@ -426,16 +473,11 @@ const DisponibilidadAcompaniamientoPage = () => {
         }
     };
 
-    // ANOTACIÓN: Lógica mejorada para fusionar franjas horarias superpuestas o consecutivas.
     const handleSaveOrUpdateAvailability = (updatedRecord) => {
         const { userId, dia } = updatedRecord;
-
-        // Convertir la nueva franja a minutos
         const [newStartStr, newEndStr] = updatedRecord.franja.split('-');
         let newStartMinutes = timeStringToTotalMinutes(newStartStr);
         let newEndMinutes = timeStringToTotalMinutes(newEndStr);
-
-        // Acumular los datos del nuevo bloque fusionado.
         let mergedHoursPresencial = updatedRecord.horasDisponiblesParaRealizarAcompaniamientoPresencial;
         let mergedHoursRemoto = updatedRecord.horasDisponiblesParaRealizarAcompaniamientoRemoto;
 
@@ -444,52 +486,36 @@ const DisponibilidadAcompaniamientoPage = () => {
             recordsToMergeAndRemove.add(updatedRecord.id);
         }
 
-        // Buscar otros registros del mismo usuario y día para verificar superposiciones.
-        const otherRecordsOnSameDay = disponibilidadRecords.filter(
-            r => r.userId === userId && r.dia === dia && r.id !== updatedRecord.id
-        );
+        const otherRecordsOnSameDay = disponibilidadRecords.filter(r => r.userId === userId && r.dia === dia && r.id !== updatedRecord.id);
 
         otherRecordsOnSameDay.forEach(existingRecord => {
             const [existingStartStr, existingEndStr] = existingRecord.franja.split('-');
             const existingStartMinutes = timeStringToTotalMinutes(existingStartStr);
             const existingEndMinutes = timeStringToTotalMinutes(existingEndStr);
-
-            // Comprobar si las franjas se superponen o son consecutivas
             if (newStartMinutes <= existingEndMinutes && newEndMinutes >= existingStartMinutes) {
-                // Fusionar las franjas
                 newStartMinutes = Math.min(newStartMinutes, existingStartMinutes);
                 newEndMinutes = Math.max(newEndMinutes, existingEndMinutes);
-
-                // Sumar las horas. Podrías implementar otra lógica si es necesario.
                 mergedHoursPresencial += existingRecord.horasDisponiblesParaRealizarAcompaniamientoPresencial;
                 mergedHoursRemoto += existingRecord.horasDisponiblesParaRealizarAcompaniamientoRemoto;
-
-                // Marcar el registro existente para su eliminación
                 recordsToMergeAndRemove.add(existingRecord.id);
             }
         });
 
-        // Convertir los minutos de nuevo a formato HHMM
         const formatMinutesToHHMM = (totalMinutes) => {
             const hours = Math.floor(totalMinutes / 60);
             const minutes = totalMinutes % 60;
             return `${String(hours).padStart(2, '0')}${String(minutes).padStart(2, '0')}`;
         };
-
         const finalFranja = `${formatMinutesToHHMM(newStartMinutes)}-${formatMinutesToHHMM(newEndMinutes)}`;
-
         const finalRecord = {
             ...updatedRecord,
-            id: `disp_${Date.now()}`, // Crear un nuevo ID para el bloque fusionado
+            id: `disp_${Date.now()}`,
             franja: finalFranja,
             horasDisponiblesParaRealizarAcompaniamientoPresencial: mergedHoursPresencial,
             horasDisponiblesParaRealizarAcompaniamientoRemoto: mergedHoursRemoto,
         };
-
         setDisponibilidadRecords(prev => {
-            // Eliminar todos los registros que se han fusionado
             const recordsWithoutMerged = prev.filter(r => !recordsToMergeAndRemove.has(r.id));
-            // Añadir el nuevo registro fusionado
             return [...recordsWithoutMerged, finalRecord];
         });
         
@@ -510,6 +536,15 @@ const DisponibilidadAcompaniamientoPage = () => {
         }
     };
     
+    if (isLoading) {
+        return (
+            <div className="flex flex-col justify-center items-center h-screen bg-gray-50">
+                <Loader2 className="h-16 w-16 text-teal-600 animate-spin" />
+                <p className="mt-4 text-xl text-gray-700">Cargando datos de disponibilidad...</p>
+            </div>
+        );
+    }
+
     return (
         <div className="container mx-auto p-4 md:p-6 bg-gray-50 min-h-screen font-sans">
             <header className="mb-8">
@@ -533,7 +568,7 @@ const DisponibilidadAcompaniamientoPage = () => {
                     <h2 className="text-2xl font-semibold text-gray-700 flex items-center"><Users className="mr-2 text-teal-600" /> Lista de Especialistas ({usuarios.length})</h2>
                     <input type="text" placeholder="Buscar especialista por DNI o nombre..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setCurrentPage(1);}} className="w-full md:w-2/5 p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent shadow-sm" />
                 </div>
-                {!paginatedUsers.length ? ( <div className="text-center py-12"> <Users size={56} className="mx-auto text-gray-400 mb-4" /> <p className="text-xl text-gray-500 mb-2">{usuarios.length === 0 ? "No hay especialistas." : "No se encontraron especialistas."}</p></div> ) : ( <> <div className="overflow-x-auto shadow-md rounded-lg"> <table className="min-w-full divide-y divide-gray-200"><thead className="bg-gray-100"><tr>{['Especialista', 'DNI', 'Email', 'Teléfono', 'Pref. Horarios', 'Pref. Sede', 'Acciones'].map(header => (<th key={header} scope="col" className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{header}</th>))}</tr></thead><tbody className="bg-white divide-y divide-gray-200">{paginatedUsers.map((usuario) => ( <tr key={usuario.id} className="hover:bg-teal-50/50 transition-colors duration-150 group"><td className="px-5 py-4 whitespace-nowrap text-sm text-gray-800 font-medium">{usuario.apellidosNombresCompletos}</td><td className="px-5 py-4 whitespace-nowrap text-sm">{usuario.dni}</td><td className="px-5 py-4 whitespace-nowrap text-sm">{usuario.email}</td><td className="px-5 py-4 whitespace-nowrap text-sm">{usuario.telefono}</td><td className="px-5 py-4 text-sm max-w-xs truncate" title={usuario.preferenciaHorarios}>{usuario.preferenciaHorarios}</td><td className="px-5 py-4 whitespace-nowrap text-sm">{usuario.sedePreferida}</td><td className="px-5 py-4 whitespace-nowrap text-sm"><div className="flex space-x-3"><button onClick={() => openIndividualScheduleModal(usuario.id)} className="text-purple-600 hover:text-purple-900" title="Ver/Editar Horario Individual"><Eye size={20} /></button></div></td></tr> ))}</tbody></table></div> {totalPages > 1 && ( <div className="mt-6 flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0"> <p className="text-sm text-gray-700">Mostrando <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> - <span className="font-medium">{Math.min(currentPage * itemsPerPage, totalDocs)}</span> de <span className="font-medium">{totalDocs}</span></p> <div className="flex items-center space-x-2"> <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50">Anterior</button> <span className="text-sm text-gray-700">Página {currentPage} de {totalPages}</span> <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50">Siguiente</button> </div> </div> )} </>)}
+                {!paginatedUsers.length ? ( <div className="text-center py-12"> <Users size={56} className="mx-auto text-gray-400 mb-4" /> <p className="text-xl text-gray-500 mb-2">{usuarios.length === 0 ? "No hay especialistas." : "No se encontraron especialistas."}</p></div> ) : ( <> <div className="overflow-x-auto shadow-md rounded-lg"> <table className="min-w-full divide-y divide-gray-200"><thead className="bg-gray-100"><tr>{['Especialista', 'DNI', 'Acciones'].map(header => (<th key={header} scope="col" className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{header}</th>))}</tr></thead><tbody className="bg-white divide-y divide-gray-200">{paginatedUsers.map((usuario) => ( <tr key={usuario.id} className="hover:bg-teal-50/50 transition-colors duration-150 group"><td className="px-5 py-4 whitespace-nowrap text-sm text-gray-800 font-medium">{usuario.apellidosNombresCompletos}</td><td className="px-5 py-4 whitespace-nowrap text-sm">{usuario.dni}</td><td className="px-5 py-4 whitespace-nowrap text-sm"><div className="flex space-x-3"><button onClick={() => openIndividualScheduleModal(usuario.id)} className="text-purple-600 hover:text-purple-900" title="Ver/Editar Horario Individual"><Eye size={20} /></button></div></td></tr> ))}</tbody></table></div> {totalPages > 1 && ( <div className="mt-6 flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0"> <p className="text-sm text-gray-700">Mostrando <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> - <span className="font-medium">{Math.min(currentPage * itemsPerPage, totalDocs)}</span> de <span className="font-medium">{totalDocs}</span></p> <div className="flex items-center space-x-2"> <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50">Anterior</button> <span className="text-sm text-gray-700">Página {currentPage} de {totalPages}</span> <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50">Siguiente</button> </div> </div> )} </>)}
             </section>
 
             <WeeklyScheduleModal 

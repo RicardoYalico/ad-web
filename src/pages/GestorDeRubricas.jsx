@@ -341,7 +341,7 @@ export default function GestorDeRubricas() {
   return (
     <>
         <div className="bg-slate-50 min-h-screen p-4 sm:p-6 md:p-8 font-sans">
-        <div className="max-w-7xl mx-auto">
+        <div className="mx-auto">
             <header className="mb-6 md:mb-8">
             <h1 className="text-3xl sm:text-4xl font-bold text-slate-800 text-center mb-2">
                 Centro de Rúbricas Docentes

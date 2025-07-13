@@ -856,7 +856,7 @@ const TablaDinamica = () => {
                 <EditRecordComponent record={editingRecord} onClose={handleCloseEdit} onSave={handleSaveEdit} />
             ) : (
                 <> {/* Fragmento para renderizar la tabla y controles cuando no se está viendo/editando */}
-                    <h1 style={{ textAlign: 'center', color: '#333', marginBottom: '25px' }}>Tabla Dinámica de Registros</h1>
+                    <h1 style={{ textAlign: 'center', color: '#333', marginBottom: '25px' }}>Registros de cumplimiento</h1>
 
                     <div style={filterControlSectionStyle}>
                         <div>
