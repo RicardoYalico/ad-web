@@ -38,6 +38,7 @@ const ROLES = {
 const mockUsers = [
   { dni: '12345678', password: 'anypassword', name: 'Admin General', role: ROLES.ADMIN, avatar: 'https://placehold.co/40x40/777777/FFFFFF?text=AG' },
   { dni: '18130461', password: 'anypassword', name: 'Dr. Ana Torres', role: ROLES.SPECIALIST, avatar: 'https://placehold.co/40x40/3498DB/FFFFFF?text=AT' },
+  { dni: '40019902', password: 'anypassword', name: 'EP. 2', role: ROLES.SPECIALIST, avatar: 'https://placehold.co/40x40/3498DB/FFFFFF?text=AT' },
   { dni: '11223344', password: 'anypassword', name: 'Laura Pérez', role: ROLES.COORDINATOR, avatar: 'https://placehold.co/40x40/F39C12/FFFFFF?text=LP' },
 ];
 
