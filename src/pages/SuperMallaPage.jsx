@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Grid, UploadCloud, AlertTriangle, Download, Loader2, XCircle, Trash2, ChevronDown, History } from 'lucide-react';
 
 // --- CONFIGURACIÓN ---
-const API_BASE_URL = 'https://kali-ad-web.beesoftware.net/api/super-malla';
+const API_BASE_URL = 'http://localhost:3001/api/super-malla';
 const BATCH_SIZE = 1000;
 
 // Claves API para la Super Malla.

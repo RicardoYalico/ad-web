@@ -3,8 +3,8 @@ import { User, CalendarDays, RefreshCw, X, AlertTriangle, Clock, Loader, History
 
 // --- Constantes de API ---
 // URLs base de las APIs. Las consultas se construirán dinámicamente.
-const API_URL = 'https://kali-ad-web.beesoftware.net/api/asignacion-especialista-docentes';
-const HISTORY_API_URL = 'https://kali-ad-web.beesoftware.net/api/historial-asignaciones';
+const API_URL = 'http://localhost:3001/api/asignacion-especialista-docentes';
+const HISTORY_API_URL = 'http://localhost:3001/api/historial-asignaciones';
 
 // --- Mock Data (usado como fallback en caso de error de API) ---
 // Estructura de datos para desarrollo o si la API falla.
@@ -187,7 +187,7 @@ const DashboardPage = () => {
         executionDate: null,
     });
     const [history, setHistory] = useState([]);
-    const [dismissedNotifications, setDismissedNotifications] = useState([]);
+    // const [dismissedNotifications, setDismissedNotifications] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const loadDashboardData = async () => {
@@ -254,16 +254,16 @@ const DashboardPage = () => {
         ];
     }, [stats]);
     
-    const visibleHistory = useMemo(() => {
-        // Ordena por fecha (más nuevo primero) y filtra los descartados.
-        return history
-            .sort((a, b) => new Date(b.createdAt || b.fechaHoraEjecucion) - new Date(a.createdAt || a.fechaHoraEjecucion))
-            .filter(item => !dismissedNotifications.includes(item._id));
-    }, [history, dismissedNotifications]);
+    // const visibleHistory = useMemo(() => {
+    //     // Ordena por fecha (más nuevo primero) y filtra los descartados.
+    //     return history
+    //         .sort((a, b) => new Date(b.createdAt || b.fechaHoraEjecucion) - new Date(a.createdAt || a.fechaHoraEjecucion))
+    //         .filter(item => !dismissedNotifications.includes(item._id));
+    // }, [history, dismissedNotifications]);
 
-    const handleDismissNotification = (id) => {
-        setDismissedNotifications(prev => [...prev, id]);
-    };
+    // const handleDismissNotification = (id) => {
+    //     setDismissedNotifications(prev => [...prev, id]);
+    // };
 
     return (
         <div className="bg-slate-100 font-sans min-h-screen p-4 sm:p-6 lg:p-8">

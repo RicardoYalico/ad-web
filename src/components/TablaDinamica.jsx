@@ -455,7 +455,7 @@ const TablaDinamica = () => {
     useEffect(() => {
         const cargarRegistros = async () => {
             try {
-                const response = await fetch('https://kali-ad-web.beesoftware.net/api/rubricas');
+                const response = await fetch('http://localhost:3001/api/rubricas');
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
 

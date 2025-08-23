@@ -352,8 +352,8 @@ const SeleccionDocenteSeguimiento = () => {
         setError(null);
         try {
             const [teachersResponse, epResponse] = await Promise.all([
-                fetch('https://kali-ad-web.beesoftware.net/api/asignaciones?latest=true'),
-                fetch(`https://kali-ad-web.beesoftware.net/api/disponibilidad-acompaniamiento?dniEspecialista=${currentUser.dni}`)
+                fetch('http://localhost:3001/api/asignaciones?latest=true'),
+                fetch(`http://localhost:3001/api/disponibilidad-acompaniamiento?dniEspecialista=${currentUser.dni}`)
             ]);
 
             if (!teachersResponse.ok) throw new Error(`Error fetching teachers: ${teachersResponse.status}`);

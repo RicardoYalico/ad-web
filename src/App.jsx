@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Users, UserCheck, CalendarDays, BookOpen, Building,
   ClipboardList, Settings, Bell, UserCircle, Menu, X, ChevronDown,
-  Search, LogOut, Briefcase, Clock, FileText, CalendarRange, Layers3, BookMarked
+  Search, LogOut, Briefcase, Clock, FileText, CalendarRange, Layers3, BookMarked,MapPin
 } from 'lucide-react';
 
 import LoginPage from './components/LoginPage';
@@ -12,20 +12,17 @@ import { NavItem } from './components/CommonComponents';
 import DashboardPage from './pages/DashboardPage';
 import AssignmentsPage from './pages/AssignmentsPage';
 import DisponibilidadAcompaniamientoPage from './pages/SpecialistsPage';
-import ProgramacionHorariaPage from './pages/ProgramacionHorariaPage';
 import SchedulesPage from './pages/SchedulesPage';
-import EsasPage from './pages/EsasPage';
 import TablaDinamica from './components/TablaDinamica';
-import ReporteUnicoDocentePage from './pages/ReporteUnicoDocentePage';
-import SuperMallaPage from './pages/SuperMallaPage';
 import GestorDeRubricas from './pages/GestorDeRubricas';
-import PlanIntegralDocentePage from './pages/PlanIntegralDocentePage';
 import DisponibilidadPage from './pages/DisponibilidadPage';
 import DashboardAdminPage from './pages/DashboardAdminPage';
-import DashboardResultados from './pages/DashboardResultados';
-import AsignacionDocenteEp from './pages/AsignacionDocenteEp';
 import SeleccionDocenteSeguimiento from './pages/SeleccionDocenteSeguimiento';
-
+import RubricTemplatesManager from './pages/RubricTemplatesManager';
+import GestionSegmentacion from './pages/GestionSegmentacionPage';
+import SuperMallaPage from './pages/SuperMallaPage';
+// AGREGAR esta línea después:
+import NotificationBell from './components/NotificationBell';
 // <-- MEJORA: Se definen constantes para los roles para evitar errores de tipeo.
 const ROLES = {
   ADMIN: 'Administrador',
@@ -37,9 +34,10 @@ const ROLES = {
 // La contraseña puede ser cualquiera para propósitos de este cambio.
 const mockUsers = [
   { dni: '12345678', password: 'anypassword', name: 'Admin General', role: ROLES.ADMIN, avatar: 'https://placehold.co/40x40/777777/FFFFFF?text=AG' },
-  { dni: '18130461', password: 'anypassword', name: 'Dr. Ana Torres', role: ROLES.SPECIALIST, avatar: 'https://placehold.co/40x40/3498DB/FFFFFF?text=AT' },
+  { dni: '18130461', password: 'anypassword', name: 'MIRANDA GARCÍA CARMEN DOLORES', role: ROLES.SPECIALIST, avatar: 'https://placehold.co/40x40/3498DB/FFFFFF?text=AT' },
   { dni: '40019902', password: 'anypassword', name: 'EP. 2', role: ROLES.SPECIALIST, avatar: 'https://placehold.co/40x40/3498DB/FFFFFF?text=AT' },
   { dni: '11223344', password: 'anypassword', name: 'Laura Pérez', role: ROLES.COORDINATOR, avatar: 'https://placehold.co/40x40/F39C12/FFFFFF?text=LP' },
+  { dni: '40248854', password: 'anypassword', name: 'TERAN ANA', role: ROLES.SPECIALIST, avatar: 'https://placehold.co/40x40/F39C12/FFFFFF?text=LP' },
 ];
 
 // <-- MEJORA: Configuración centralizada para roles, permisos y página de inicio.
@@ -48,17 +46,13 @@ const pageAccessConfig = {
     allowed: [
       'Dashboard de Resultados',
       'Gestión de Asignación',
-      'Programación Horaria',
-      'ESA',
-      'Reporte Unico Docente',
-      'Plan Integral Docente',
       'Gestión Disponibilidad EP',
-      'Super Malla',
-      'Instrumentos de observación',
+      'Ejecución del Acompañamiento',
       'Registros de cumplimiento',
-      'Dashboard de Resultados2',
-      'Asignación Docente EP',
+      'Formatos de Rúbricas',
       'Selección Docente Seguimiento',
+      'Gestión de Segmentación',
+      'Super Malla',
     ],
     defaultPage: 'Dashboard de Resultados',
   },
@@ -171,30 +165,22 @@ const App = () => {
         return <AssignmentsPage />;  
       case 'Gestión Disponibilidad EP':
         return <DisponibilidadAcompaniamientoPage />;
-      case 'Reporte Unico Docente':
-        return <ReporteUnicoDocentePage />;
-      case 'Programación Horaria':  
-        return <ProgramacionHorariaPage onOpenTeacherSchedule={(teacher) => handleOpenSchedule(teacher, 'teacher')} />;  
       case 'Horarios':
         return <SchedulesPage />;
-      case 'Plan Integral Docente':
-        return <PlanIntegralDocentePage />;
-      case 'ESA':
-        return <EsasPage />;
-      case 'Super Malla':
-        return <SuperMallaPage />;
-      case 'Instrumentos de observación':
+      case 'Ejecución del Acompañamiento':
         return <GestorDeRubricas />;
+      case 'Formatos de Rúbricas':
+        return <RubricTemplatesManager />;
       case 'Registros de cumplimiento':
         return <TablaDinamica />;
       case 'Disponibilidad':
         return <DisponibilidadPage />;
-      case 'Dashboard de Resultados2':
-        return <DashboardResultados />;
-      case 'Asignación Docente EP':
-        return <AsignacionDocenteEp />;
       case 'Selección Docente Seguimiento':
         return <SeleccionDocenteSeguimiento />;
+      case 'Gestión de Segmentación':
+        return <GestionSegmentacion />;
+      case 'Super Malla':
+        return <SuperMallaPage />;
       default:
         // Si la página activa está vacía (ej. al inicio antes del useEffect), no mostrar nada o un loader.
         if (!page) return null;  
@@ -206,18 +192,12 @@ const App = () => {
     { name: 'Dashboard de Resultados', icon: <LayoutDashboard size={20} /> }, // <-- CAMBIO: Nombre actualizado
     { name: 'Panel de Control', icon: <LayoutDashboard size={20} /> },
     { name: 'Gestión de Asignación', icon: <UserCheck size={20} /> },
-    { name: 'Programación Horaria', icon: <CalendarRange size={20} /> },
-    { name: 'ESA', icon: <Users size={20} /> },
-    { name: 'Reporte Unico Docente', icon: <FileText size={20} /> },
-    { name: 'Plan Integral Docente', icon: <CalendarDays size={20} /> },
     { name: 'Gestión Disponibilidad EP', icon: <Briefcase size={20} /> },
-    { name: 'Super Malla', icon: <Layers3 size={20} /> },
-    { name: 'Instrumentos de observación', icon: <BookMarked size={20} /> },
-    { name: 'Registros de cumplimiento', icon: <ClipboardList size={20} /> },
+    { name: 'Formatos de Rúbricas', icon: <ClipboardList size={20} /> },
+    { name: 'Ejecución del Acompañamiento', icon: <BookMarked size={20} /> },
     { name: 'Disponibilidad', icon: <Clock size={20} /> },
-    { name: 'Dashboard de Resultados2', icon: <Building size={20} /> }, // <-- CAMBIO: Nombre actualizado
-    { name: 'Asignación Docente EP', icon: <UserCheck size={20} /> },
-    { name: 'Selección Docente Seguimiento', icon: <UserCircle size={20} /> }, // <-- CAMBIO: Nombre actualizado
+    { name: 'Gestión de Segmentación', icon: <Users size={20} /> },
+    { name: 'Super Malla', icon: <MapPin size={20} /> },
   ];
 
   // <-- MEJORA: El menú se filtra de forma robusta y centralizada.
@@ -258,10 +238,21 @@ const App = () => {
             {/* El input de búsqueda se mantiene igual */}
           </div>
           <div className="flex items-center space-x-5">
-            <button className="relative text-gray-600 hover:text-blue-500 transition-colors">
-              <Bell size={24} />
-              <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
-            </button>
+            {/* Solo especialistas ven notificaciones funcionales */}
+            {currentUser?.role === ROLES.SPECIALIST && (
+              <NotificationBell 
+                userDni={currentUser.dni}
+              />
+            )}
+            
+            {/* Otros roles ven campanita simple */}
+            {currentUser?.role !== ROLES.SPECIALIST && (
+              <button className="relative text-gray-600 hover:text-blue-500 transition-colors">
+                <Bell size={24} />
+                <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-gray-300 ring-2 ring-white"></span>
+              </button>
+            )}
+
             <div className="relative">
               <button onClick={toggleProfileDropdown} className="flex items-center space-x-2 focus:outline-none">
                 <img src={currentUser?.avatar} alt="User Avatar" className="w-10 h-10 rounded-full border-2 border-blue-300 hover:border-blue-500 transition-all"/>

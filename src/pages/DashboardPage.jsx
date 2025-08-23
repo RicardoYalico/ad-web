@@ -3,8 +3,8 @@ import { User, CalendarDays, RefreshCw, Mail, BookOpen, Calendar, Building, Tren
 
 // --- Constantes de API ---
 // Se elimina el DNI harcodeado. Se obtendrá desde localStorage.
-const API_URL = 'https://kali-ad-web.beesoftware.net/api/asignacion-especialista-docentes';
-const HISTORY_API_URL = 'https://kali-ad-web.beesoftware.net/api/historial-asignaciones';
+const API_URL = 'http://localhost:3001/api/asignacion-especialista-docentes';
+const HISTORY_API_URL = 'http://localhost:3001/api/historial-asignaciones';
 
 // --- Mock Data (usado como fallback en caso de error de API) ---
 // Estructura de datos para desarrollo o si la API falla.
@@ -515,98 +515,98 @@ const TeacherDetailModal = ({ teacher, onClose }) => {
 /**
  * Componente para mostrar notificaciones de historial de cambios.
  */
-const Notifications = ({ history, currentDni, onDismiss, isLoading }) => {
-    // Muestra un loader mientras se carga el historial
-    if (isLoading) {
-        return (
-            <div className="bg-white p-6 rounded-2xl shadow-md mb-6 flex items-center justify-center min-h-[100px]">
-                <Loader className="animate-spin h-6 w-6 text-blue-600 mr-3" />
-                <span className="text-gray-500">Cargando historial de cambios...</span>
-            </div>
-        );
-    }
+// const Notifications = ({ history, currentDni, onDismiss, isLoading }) => {
+//     // Muestra un loader mientras se carga el historial
+//     if (isLoading) {
+//         return (
+//             <div className="bg-white p-6 rounded-2xl shadow-md mb-6 flex items-center justify-center min-h-[100px]">
+//                 <Loader className="animate-spin h-6 w-6 text-blue-600 mr-3" />
+//                 <span className="text-gray-500">Cargando historial de cambios...</span>
+//             </div>
+//         );
+//     }
 
-    // No renderiza nada si no hay historial para mostrar
-    if (!history || history.length === 0) {
-        return null;
-    }
+//     // No renderiza nada si no hay historial para mostrar
+//     if (!history || history.length === 0) {
+//         return null;
+//     }
 
-    /**
-     * Determina el mensaje, ícono y color de la notificación basado en el tipo de cambio.
-     * @param {object} item - El objeto de historial.
-     * @returns {object} - Un objeto con ícono, mensaje y clases de estilo.
-     */
-    const getNotificationInfo = (item) => {
-        const { docente, detalleAnterior, nombreEspecialista, especialistaDni, estadoCambio } = item;
+//     /**
+//      * Determina el mensaje, ícono y color de la notificación basado en el tipo de cambio.
+//      * @param {object} item - El objeto de historial.
+//      * @returns {object} - Un objeto con ícono, mensaje y clases de estilo.
+//      */
+//     const getNotificationInfo = (item) => {
+//         const { docente, detalleAnterior, nombreEspecialista, especialistaDni, estadoCambio } = item;
         
-        if (estadoCambio === 'REASIGNADO') {
-            // Caso 1: El docente fue asignado AL especialista actual.
-            if (especialistaDni === currentDni) {
-                return {
-                    icon: <CheckCircle className="text-green-500" size={20} />,
-                    message: (
-                        <span>
-                            Se te ha asignado el docente <strong className="font-semibold">{docente}</strong>. Anteriormente estaba a cargo de {detalleAnterior?.nombreEspecialista || 'N/A'}.
-                        </span>
-                    ),
-                    bgColor: 'bg-green-50/70 border-green-200'
-                };
-            }
-            // Caso 2: El docente fue reasignado DESDE el especialista actual a otro.
-            if (detalleAnterior?.especialistaDni === currentDni) {
-                 return {
-                    icon: <AlertTriangle className="text-orange-500" size={20} />,
-                    message: (
-                       <span>
-                          El docente <strong className="font-semibold">{docente}</strong> ha sido reasignado a <strong className="font-semibold">{nombreEspecialista || 'N/A'}</strong>.
-                       </span>
-                    ),
-                    bgColor: 'bg-orange-50/70 border-orange-200'
-                 };
-            }
-        }
+//         if (estadoCambio === 'REASIGNADO') {
+//             // Caso 1: El docente fue asignado AL especialista actual.
+//             if (especialistaDni === currentDni) {
+//                 return {
+//                     icon: <CheckCircle className="text-green-500" size={20} />,
+//                     message: (
+//                         <span>
+//                             Se te ha asignado el docente <strong className="font-semibold">{docente}</strong>. Anteriormente estaba a cargo de {detalleAnterior?.nombreEspecialista || 'N/A'}.
+//                         </span>
+//                     ),
+//                     bgColor: 'bg-green-50/70 border-green-200'
+//                 };
+//             }
+//             // Caso 2: El docente fue reasignado DESDE el especialista actual a otro.
+//             if (detalleAnterior?.especialistaDni === currentDni) {
+//                  return {
+//                     icon: <AlertTriangle className="text-orange-500" size={20} />,
+//                     message: (
+//                        <span>
+//                           El docente <strong className="font-semibold">{docente}</strong> ha sido reasignado a <strong className="font-semibold">{nombreEspecialista || 'N/A'}</strong>.
+//                        </span>
+//                     ),
+//                     bgColor: 'bg-orange-50/70 border-orange-200'
+//                  };
+//             }
+//         }
         
-        // Fallback para otros cambios que podrían ser relevantes para el especialista consultado
-        return {
-            icon: <History className="text-blue-500" size={20} />,
-            message: `Hubo una actualización para el docente ${docente}.`,
-            bgColor: 'bg-blue-50/70 border-blue-200'
-        };
-    };
+//         // Fallback para otros cambios que podrían ser relevantes para el especialista consultado
+//         return {
+//             icon: <History className="text-blue-500" size={20} />,
+//             message: `Hubo una actualización para el docente ${docente}.`,
+//             bgColor: 'bg-blue-50/70 border-blue-200'
+//         };
+//     };
 
-    return (
-        <div className="bg-white p-6 rounded-2xl shadow-md mb-6">
-            <div className="flex items-center mb-4">
-                <History className="text-blue-600 mr-3" size={24}/>
-                <h2 className="text-xl font-bold text-gray-800">Notificaciones de Cambios</h2>
-            </div>
-            <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                {history.map(item => {
-                    const { icon, message, bgColor } = getNotificationInfo(item);
-                    return (
-                        <div key={item._id} className={`p-4 rounded-lg flex items-start justify-between border ${bgColor} transition-all`}>
-                            <div className="flex items-start">
-                                <div className="flex-shrink-0 mr-4 mt-0.5">
-                                    {icon}
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-800">{message}</p>
-                                    <p className="text-xs text-gray-500 mt-1 flex items-center">
-                                        <Clock size={12} className="mr-1.5" />
-                                        {new Date(item.createdAt || item.fechaHoraEjecucion).toLocaleString('es-ES', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                    </p>
-                                </div>
-                            </div>
-                            <button onClick={() => onDismiss(item._id)} className="p-1 -mr-1 -mt-1 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 flex-shrink-0 ml-2">
-                               <X size={16} />
-                            </button>
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
-    );
-};
+//     return (
+//         <div className="bg-white p-6 rounded-2xl shadow-md mb-6">
+//             <div className="flex items-center mb-4">
+//                 <History className="text-blue-600 mr-3" size={24}/>
+//                 <h2 className="text-xl font-bold text-gray-800">Notificaciones de Cambios</h2>
+//             </div>
+//             <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+//                 {history.map(item => {
+//                     const { icon, message, bgColor } = getNotificationInfo(item);
+//                     return (
+//                         <div key={item._id} className={`p-4 rounded-lg flex items-start justify-between border ${bgColor} transition-all`}>
+//                             <div className="flex items-start">
+//                                 <div className="flex-shrink-0 mr-4 mt-0.5">
+//                                     {icon}
+//                                 </div>
+//                                 <div>
+//                                     <p className="text-sm text-gray-800">{message}</p>
+//                                     <p className="text-xs text-gray-500 mt-1 flex items-center">
+//                                         <Clock size={12} className="mr-1.5" />
+//                                         {new Date(item.createdAt || item.fechaHoraEjecucion).toLocaleString('es-ES', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+//                                     </p>
+//                                 </div>
+//                             </div>
+//                             <button onClick={() => onDismiss(item._id)} className="p-1 -mr-1 -mt-1 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 flex-shrink-0 ml-2">
+//                                <X size={16} />
+//                             </button>
+//                         </div>
+//                     );
+//                 })}
+//             </div>
+//         </div>
+//     );
+// };
 
 // --- Lógica del Panel de Control para el Especialista ---
 const DashboardPage = () => {
@@ -622,7 +622,7 @@ const DashboardPage = () => {
     const [currentSemester, setCurrentSemester] = useState('N/A');
     const [executionDate, setExecutionDate] = useState(null);
     const [history, setHistory] = useState([]);
-    const [dismissedNotifications, setDismissedNotifications] = useState([]);
+    // const [dismissedNotifications, setDismissedNotifications] = useState([]);
     const [isHistoryLoading, setIsHistoryLoading] = useState(true);
     const [specialistDni, setSpecialistDni] = useState(null); // Estado para el DNI del especialista
     const itemsPerPage = 10;
@@ -688,8 +688,9 @@ const DashboardPage = () => {
                 throw new Error(`Error en la API de historial: ${response.status}`);
             }
             const data = await response.json();
+            
             // La API debería devolver un array de cambios relevantes para el DNI consultado.
-            setHistory(data || []);
+            setHistory(data.data || []);
         } catch (error) {
             console.error("Error al cargar el historial de cambios:", error);
             setHistory([]); // En caso de error, el historial queda vacío.
@@ -770,12 +771,12 @@ const DashboardPage = () => {
         return filteredTeachers.slice(startIndex, startIndex + itemsPerPage);
     }, [filteredTeachers, currentPage, itemsPerPage]);
     
-    const visibleHistory = useMemo(() => {
-        // Ordena por fecha (más nuevo primero) y filtra los descartados.
-        return history
-            .sort((a, b) => new Date(b.createdAt || b.fechaHoraEjecucion) - new Date(a.createdAt || a.fechaHoraEjecucion))
-            .filter(item => !dismissedNotifications.includes(item._id));
-    }, [history, dismissedNotifications]);
+    // const visibleHistory = useMemo(() => {
+    //     // Ordena por fecha (más nuevo primero) y filtra los descartados.
+    //     return history
+    //         .sort((a, b) => new Date(b.createdAt || b.fechaHoraEjecucion) - new Date(a.createdAt || a.fechaHoraEjecucion))
+    //         .filter(item => !dismissedNotifications.includes(item._id));
+    // }, [history, dismissedNotifications]);
 
     const totalPages = Math.ceil(filteredTeachers.length / itemsPerPage);
 
@@ -790,9 +791,9 @@ const DashboardPage = () => {
         }
     };
     
-    const handleDismissNotification = (id) => {
-        setDismissedNotifications(prev => [...prev, id]);
-    };
+    // const handleDismissNotification = (id) => {
+    //     setDismissedNotifications(prev => [...prev, id]);
+    // };
 
     const getRoleBadge = (role) => {
         if (!role) return 'bg-gray-200 text-gray-800';
@@ -824,12 +825,12 @@ const DashboardPage = () => {
                 </div>
                 
                 {/* --- Nueva sección de notificaciones --- */}
-                <Notifications 
+                {/* <Notifications 
                     history={visibleHistory}
                     currentDni={specialistDni}
                     onDismiss={handleDismissNotification}
                     isLoading={isHistoryLoading}
-                />
+                /> */}
                 
                 <div className="bg-white p-6 rounded-2xl shadow-md mb-6">
                    <h2 className="text-xl font-bold text-gray-800 mb-4">Filtrar Docentes</h2>

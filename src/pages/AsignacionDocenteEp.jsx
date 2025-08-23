@@ -6,9 +6,10 @@ import CalendarView from "../components/AssignmentsPage/CalendarView"
 import HorarioCardComponent from "../components/AssignmentsPage/HorarioCardComponent"
 import InfoPill from '../components/AssignmentsPage/InfoPill';
 import PiddCourseCard from '../components/AssignmentsPage/PiddCourseCard';
-import Notifications from '../components/AssignmentsPage/Notifications';
+// import Notifications from '../components/AssignmentsPage/Notifications';
 
-const HISTORY_API_URL = 'https://kali-ad-web.beesoftware.net/api/historial-asignaciones';
+// const HISTORY_API_URL = 'http://localhost:3001/api/historial-asignaciones';
+const HISTORY_API_URL = 'http://localhost:3001/api/historial-asignaciones';
 
 
 // --- Helper para formatear ESA ---
@@ -240,7 +241,7 @@ export default function DashboardResultados() {
     const itemsPerPage = 10;
 
     const [periodoAsignacion, setPeriodoAsignacion] = useState('2025-1');
-    const [dismissedNotifications, setDismissedNotifications] = useState([]);
+    // const [dismissedNotifications, setDismissedNotifications] = useState([]);
     const [history, setHistory] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -341,7 +342,7 @@ export default function DashboardResultados() {
     const fetchData = async () => {
         setIsTableLoading(true);
         try {
-            const response = await fetch('https://kali-ad-web.beesoftware.net/api/asignacion-especialista-docentes?latest=true');
+            const response = await fetch('http://localhost:3001/api/asignacion-especialista-docentes?latest=true');
             if (!response.ok) {
                 throw new Error(`Error en la API: ${response.status}`);
             }
@@ -413,16 +414,16 @@ export default function DashboardResultados() {
         return 'bg-gray-200 text-gray-800';
     }
 
-    const visibleHistory = useMemo(() => {
-        // Ordena por fecha (más nuevo primero) y filtra los descartados.
-        return history
-            .sort((a, b) => new Date(b.createdAt || b.fechaHoraEjecucion) - new Date(a.createdAt || a.fechaHoraEjecucion))
-            .filter(item => !dismissedNotifications.includes(item._id));
-    }, [history, dismissedNotifications]);
+    // const visibleHistory = useMemo(() => {
+    //     // Ordena por fecha (más nuevo primero) y filtra los descartados.
+    //     return history
+    //         .sort((a, b) => new Date(b.createdAt || b.fechaHoraEjecucion) - new Date(a.createdAt || a.fechaHoraEjecucion))
+    //         .filter(item => !dismissedNotifications.includes(item._id));
+    // }, [history, dismissedNotifications]);
 
-    const handleDismissNotification = (id) => {
-        setDismissedNotifications(prev => [...prev, id]);
-    };
+    // const handleDismissNotification = (id) => {
+    //     setDismissedNotifications(prev => [...prev, id]);
+    // };
 
 
     return (
@@ -446,13 +447,13 @@ export default function DashboardResultados() {
                     <p className="text-lg text-gray-500 mt-1">Busca, visualiza y genera las asignaciones de los colaboradores.</p>
                 </header>
 
-                <div>
+                {/* <div>
                     <Notifications
                         history={visibleHistory}
                         onDismiss={handleDismissNotification}
                         isLoading={isLoading}
                     />
-                </div>
+                </div> */}
                 
                 <div className="bg-white p-6 rounded-2xl shadow-md mb-6">
                     <h2 className="text-xl font-bold text-gray-800 mb-1">Buscar Docentes</h2>

@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Calendar, Clock, MapPin, Plus, Edit, Trash2, Save, X, Briefcase, Home, Loader2, AlertTriangle, CheckCircle, UploadCloud } from 'lucide-react';
 
-// --- CONSTANTES Y HELPERS GLOBALES ---
+// --- GLOBAL CONSTANTS AND HELPERS ---
 
-// Orden estándar de los días de la semana para la visualización del calendario.
+// Standard order of the days of the week for calendar display.
 const DIAS_SEMANA = ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO", "DOMINGO"];
 
-// Opciones para el desplegable de Sedes.
+// Options for the location dropdown.
 const SEDES_OPTIONS = [
     { valor: 'CAJ', nombre: 'CAJAMARCA' },
     { valor: 'LC0', nombre: 'BREÑA' },
@@ -20,12 +20,12 @@ const SEDES_OPTIONS = [
     { valor: 'VIR', nombre: 'VIRTUAL' },
 ];
 
-// Rango horario del calendario visual.
+// Visual time range for the calendar.
 const CALENDAR_START_HOUR = 7;
 const CALENDAR_END_HOUR = 23;
 
 /**
- * Genera las etiquetas de tiempo para el eje vertical del calendario (ej: "07:00", "07:30").
+ * Generates time labels for the vertical axis of the calendar (e.g., "07:00", "07:30").
  */
 const timeLabels = Array.from({ length: (CALENDAR_END_HOUR - CALENDAR_START_HOUR) * 2 }, (_, i) => {
     const hour = CALENDAR_START_HOUR + Math.floor(i / 2);
@@ -34,19 +34,19 @@ const timeLabels = Array.from({ length: (CALENDAR_END_HOUR - CALENDAR_START_HOUR
 });
 
 /**
- * Convierte una cadena de tiempo (ej: "0930" o "930") a minutos totales desde la medianoche.
- * @param {string} timeStr - La cadena de tiempo a convertir.
- * @returns {number} - El total de minutos o -1 si el formato es inválido.
+ * Converts a time string (e.g., "0930" or "930") to total minutes from midnight.
+ * @param {string} timeStr - The time string to convert.
+ * @returns {number} - The total minutes, or -1 if the format is invalid.
  */
 const timeStringToMinutes = (timeStr) => {
     if (!timeStr || typeof timeStr !== 'string') return -1;
     const cleaned = timeStr.replace(':', '').trim();
     
     let hours, minutes;
-    if (cleaned.length === 3) { // Formato HMM (ej: "930")
+    if (cleaned.length === 3) { // HMM format (e.g., "930")
         hours = parseInt(cleaned.substring(0, 1), 10);
         minutes = parseInt(cleaned.substring(1, 3), 10);
-    } else if (cleaned.length === 4) { // Formato HHMM (ej: "0930")
+    } else if (cleaned.length === 4) { // HHMM format (e.g., "0930")
         hours = parseInt(cleaned.substring(0, 2), 10);
         minutes = parseInt(cleaned.substring(2, 4), 10);
     } else {
@@ -61,9 +61,9 @@ const timeStringToMinutes = (timeStr) => {
 
 
 /**
- * Formatea una franja horaria para su visualización (ej: "0930-1100" -> "09:30 - 11:00").
- * @param {string} franja - La franja horaria en formato "HHMM-HHMM" o "HHMM - HHMM".
- * @returns {string} - La franja formateada.
+ * Formats a time range for display (e.g., "0930-1100" -> "09:30 - 11:00").
+ * @param {string} franja - The time range in "HHMM-HHMM" or "HHMM - HHMM" format.
+ * @returns {string} - The formatted range.
  */
 const formatFranjaDisplay = (franja) => {
     if (!franja || typeof franja !== 'string' || !franja.includes('-')) return franja;
@@ -77,26 +77,25 @@ const formatFranjaDisplay = (franja) => {
 };
 
 /**
- * Formatea una franja horaria al formato requerido por la API (ej: "09:30 - 11:00" -> "0930 - 1100").
- * @param {string} franja - La franja horaria en cualquier formato.
- * @returns {string} - La franja formateada para la API.
+ * Formats a time range to the format required by the API (e.g., "09:30 - 11:00" -> "0930-1100").
+ * @param {string} franja - The time range in any format.
+ * @returns {string} - The API-formatted range.
  */
 const formatFranjaForAPI = (franja) => {
-    if (!franja || typeof franja !== 'string' || !franja.includes('-')) return franja;
+    if (!franja || typeof franja !== 'string') return franja;
     return franja.replace(/:/g, '').replace(/\s/g, '');
 };
 
 
-// --- COMPONENTES SECUNDARIOS ---
+// --- CHILD COMPONENTS ---
 
 /**
- * Componente Modal para editar o añadir un bloque de disponibilidad.
+ * Modal component for editing or adding an availability block.
  */
 const AvailabilityModal = ({ isOpen, onClose, record, onSave, onDelete }) => {
     const [franjaInicio, setFranjaInicio] = useState('');
     const [franjaFin, setFranjaFin] = useState('');
     const [sede, setSede] = useState('');
-    const [horasPresencial, setHorasPresencial] = useState(0);
     const [modalError, setModalError] = useState('');
 
     useEffect(() => {
@@ -110,7 +109,6 @@ const AvailabilityModal = ({ isOpen, onClose, record, onSave, onDelete }) => {
                 setFranjaFin('');
             }
             setSede(record.sede1DePreferenciaPresencial || '');
-            setHorasPresencial(record.horasDisponiblesParaRealizarAcompaniamientoPresencial || 0);
             setModalError('');
         }
     }, [record]);
@@ -130,19 +128,21 @@ const AvailabilityModal = ({ isOpen, onClose, record, onSave, onDelete }) => {
             return;
         }
         if (!sede) {
-            setModalError("Debe seleccionar una sede.");
+            setModalError("Debes seleccionar una sede.");
             return;
         }
 
         const sedeSeleccionada = SEDES_OPTIONS.find(s => s.valor === sede);
         const franjaParaGuardar = `${franjaInicio.padStart(4, '0')}-${franjaFin.padStart(4, '0')}`;
+        const duracionHoras = (finMinutes - inicioMinutes) / 60;
 
         const updatedRecord = {
             ...record,
             franja: franjaParaGuardar,
             sede1DePreferenciaPresencial: sede,
             sedeNombreCompleto: sedeSeleccionada ? sedeSeleccionada.nombre : '',
-            horasDisponiblesParaRealizarAcompaniamientoPresencial: parseFloat(horasPresencial) || 0,
+            // This field now represents the duration of the block, not the total committed hours.
+            horasDisponiblesParaRealizarAcompaniamientoPresencial: duracionHoras,
         };
         onSave(updatedRecord);
         onClose();
@@ -187,10 +187,6 @@ const AvailabilityModal = ({ isOpen, onClose, record, onSave, onDelete }) => {
                             ))}
                         </select>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Horas Presenciales</label>
-                        <input type="number" value={horasPresencial} onChange={(e) => setHorasPresencial(e.target.value)} min="0" step="0.5" className="mt-1 input-style"/>
-                    </div>
                     <div className="flex justify-between items-center pt-4 border-t mt-4">
                         {!record._id.toString().startsWith('draft_') ? (
                            <button onClick={handleDeleteClick} className="btn-danger flex items-center"><Trash2 size={16} className="mr-1.5"/> Eliminar</button>
@@ -208,7 +204,7 @@ const AvailabilityModal = ({ isOpen, onClose, record, onSave, onDelete }) => {
 };
 
 /**
- * Componente para mostrar el calendario semanal con los bloques de disponibilidad.
+ * Component to display the weekly calendar with availability blocks.
  */
 const ScheduleCalendar = ({ records, onSlotClick, onEmptyCellClick }) => {
     const scheduleByDay = useMemo(() => {
@@ -225,29 +221,29 @@ const ScheduleCalendar = ({ records, onSlotClick, onEmptyCellClick }) => {
     return (
         <div className="bg-white p-4 rounded-b-lg shadow-lg">
             <div className="flex w-full">
-                {/* Columna de Horas */}
+                {/* Time Column */}
                 <div className="w-16 md:w-20 text-xs text-right pr-2 shrink-0">
-                    <div className="h-10"></div> {/* Espacio para cabecera de días */}
+                    <div className="h-10"></div> {/* Spacer for day header */}
                     {timeLabels.map(label => (
                         <div key={label} className="h-8 flex items-center justify-end text-gray-500">{label}</div>
                     ))}
                 </div>
 
-                {/* Columnas de Días */}
+                {/* Day Columns */}
                 <div className="flex-grow grid grid-cols-7 border-t border-l border-gray-200">
                     {DIAS_SEMANA.map(dia => (
                         <div key={dia} className="relative border-r border-gray-200">
-                           {/* Cabecera del Día */}
+                            {/* Day Header */}
                             <div className="h-10 sticky top-0 bg-gray-100 z-10 border-b border-gray-200 flex items-center justify-center">
                                <p className="text-xs md:text-sm font-semibold text-gray-600 capitalize">{dia.toLowerCase()}</p>
                             </div>
 
-                            {/* Celdas de fondo para clics */}
+                            {/* Background cells for clicks */}
                             {timeLabels.map((label, index) => (
                                 <div key={`${dia}-${label}`} className="h-8 border-b border-gray-100 cursor-pointer hover:bg-teal-50" onClick={() => onEmptyCellClick(dia, label)}></div>
                             ))}
                             
-                            {/* Bloques de Disponibilidad */}
+                            {/* Availability Blocks */}
                             {(scheduleByDay[dia] || []).map(slot => {
                                 if (!slot.franja || !slot.franja.includes('-')) return null;
                                 const [startStr, endStr] = formatFranjaForAPI(slot.franja).split('-');
@@ -282,12 +278,18 @@ const ScheduleCalendar = ({ records, onSlotClick, onEmptyCellClick }) => {
 };
 
 
-// --- COMPONENTE PRINCIPAL ---
+// --- MAIN COMPONENT ---
 
 const MiDisponibilidadPage = () => {
-    // ---- ESTADO ----
+    // ---- STATE ----
     const [disponibilidad, setDisponibilidad] = useState([]);
-    const [initialDisponibilidad, setInitialDisponibilidad] = useState([]); // Para comparar cambios
+    const [initialDisponibilidad, setInitialDisponibilidad] = useState([]); // To compare changes in calendar blocks
+    
+    // State for the total committed hours, editable by the user
+    const [horasPresencialesAsignadas, setHorasPresencialesAsignadas] = useState(0);
+    const [horasRemotasAsignadas, setHorasRemotasAsignadas] = useState(0);
+    const [initialHorasPresenciales, setInitialHorasPresenciales] = useState(0); // To compare changes
+
     const [specialistInfo, setSpecialistInfo] = useState({ nombre: '', dni: '' });
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -297,34 +299,60 @@ const MiDisponibilidadPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingRecord, setEditingRecord] = useState(null);
     
-    // ---- EFECTOS ----
+    // ---- DATA PROCESSING HELPER ----
+    const processApiData = (calendarData = []) => {
+        if (!Array.isArray(calendarData)) return [];
+        return calendarData.map(item => {
+            // Guard against malformed items
+            if (!item.franja || !item.dia) return null;
+
+            const cleanedFranja = item.franja.replace(/\s/g, ''); // e.g., "09:00-10:30" -> "09:00-10:30"
+            const [startStr, endStr] = cleanedFranja.split('-');
+
+            // Guard against malformed time ranges
+            if (!startStr || !endStr) return null;
+
+            const startMinutes = timeStringToMinutes(startStr);
+            const endMinutes = timeStringToMinutes(endStr);
+
+            // Guard against invalid times
+            if (startMinutes === -1 || endMinutes === -1 || startMinutes >= endMinutes) return null;
+
+            const hours = (endMinutes - startMinutes) / 60;
+
+            return {
+                ...item, // Spread original item
+                _id: item._id || `client_${Date.now()}_${Math.random()}`,
+                dia: item.dia.toUpperCase().trim(),
+                franja: `${startStr.replace(':', '')}-${endStr.replace(':', '')}`, // Store the cleaned, canonical version e.g. 0900-1030
+                horasDisponiblesParaRealizarAcompaniamientoPresencial: hours // Store calculated duration
+            };
+        }).filter(Boolean); // Filter out any nulls from the guards
+    };
+
+    // ---- EFFECTS ----
     
-    // Efecto para cargar los datos iniciales desde la API, usando el DNI de localStorage.
+    // Effect to load initial data from the API.
     useEffect(() => {
         const fetchDisponibilidad = async () => {
             setIsLoading(true);
             setError(null);
             
             let specialistDni = null;
-            // 1. Obtener DNI desde localStorage
             try {
                 const currentUserJSON = localStorage.getItem('currentUser');
                 if (currentUserJSON) {
                     const currentUser = JSON.parse(currentUserJSON);
                     specialistDni = currentUser?.dni;
-                    // Actualizar la info del especialista inmediatamente para el UI
-                    setSpecialistInfo({
-                        nombre: currentUser?.name || 'Usuario',
-                        dni: specialistDni || 'N/A'
-                    });
+                    setSpecialistInfo({ nombre: currentUser?.name || 'Usuario', dni: specialistDni || 'N/A' });
                 } else {
                     throw new Error("No hay un usuario logueado.");
                 }
             } catch (err) {
-                 console.error("Error al leer desde localStorage:", err);
-                 setError("No se pudo identificar al usuario. Por favor, inicia sesión de nuevo.");
-                 setIsLoading(false);
-                 return;
+               console.error("Error al leer desde localStorage:", err);
+               setError("No se pudo identificar al usuario. Por favor, inicia sesión de nuevo.");
+               setIsLoading(false);
+               return;
             }
 
             if (!specialistDni) {
@@ -333,28 +361,43 @@ const MiDisponibilidadPage = () => {
                 return;
             }
 
-            // 2. Realizar la llamada a la API con el DNI obtenido
             try {
-                const response = await fetch(`https://kali-ad-web.beesoftware.net/api/disponibilidad-acompaniamiento?dniEspecialista=${specialistDni}`);
+                const response = await fetch(`http://localhost:3001/api/disponibilidad-acompaniamiento?dniEspecialista=${specialistDni}`);
                 if (!response.ok) {
+                    if (response.status === 404) {
+                        console.log("No availability found for specialist, starting fresh.");
+                        setDisponibilidad([]);
+                        setInitialDisponibilidad([]);
+                        setHorasPresencialesAsignadas(0);
+                        setInitialHorasPresenciales(0);
+                        return; 
+                    }
                     throw new Error(`Error de red: ${response.status} ${response.statusText}`);
                 }
-                const data = await response.json();
+                const rawData = await response.json();
 
-                // Procesar y limpiar los datos de la API
-                const processedData = data.map(item => ({
-                    ...item,
-                    dia: (item.dia || '').toUpperCase().trim(),
-                    franja: (item.franja || '').replace(/\s/g, ''),
-                    horasDisponiblesParaRealizarAcompaniamientoPresencial: parseFloat(item.horasDisponiblesParaRealizarAcompaniamientoPresencial) || 0
-                }));
+                // The API returns an array, so we take the first element.
+                const data = Array.isArray(rawData) && rawData.length > 0 ? rawData[0] : null;
+
+                if (!data) {
+                    console.log("No availability data found for specialist, starting fresh.");
+                    setDisponibilidad([]);
+                    setInitialDisponibilidad([]);
+                    setHorasPresencialesAsignadas(0);
+                    setInitialHorasPresenciales(0);
+                    return;
+                }
+
+                const processedData = processApiData(data.disponibilidades);
 
                 setDisponibilidad(processedData);
-                setInitialDisponibilidad(JSON.parse(JSON.stringify(processedData))); // Deep copy
+                setInitialDisponibilidad(JSON.parse(JSON.stringify(processedData)));
 
-                // Si la API devuelve datos, sobreescribir el nombre con el que viene de la API si es más completo.
-                if (data.length > 0 && data[0].apellidosNombresCompletos) {
-                    setSpecialistInfo(prev => ({ ...prev, nombre: data[0].apellidosNombresCompletos }));
+                setHorasPresencialesAsignadas(data.horasDisponiblesParaRealizarAcompaniamientoPresencial || 0);
+                setInitialHorasPresenciales(data.horasDisponiblesParaRealizarAcompaniamientoPresencial || 0);
+
+                if (data.apellidosNombresCompletos) {
+                    setSpecialistInfo(prev => ({ ...prev, nombre: data.apellidosNombresCompletos }));
                 }
 
             } catch (err) {
@@ -366,9 +409,9 @@ const MiDisponibilidadPage = () => {
         };
 
         fetchDisponibilidad();
-    }, []); // El array de dependencias vacío asegura que se ejecute solo al montar.
+    }, []);
 
-    // Efecto para ocultar los mensajes de éxito/error después de unos segundos.
+    // Effect to hide success/error messages.
     useEffect(() => {
         if (successMessage || error) {
             const timer = setTimeout(() => {
@@ -380,7 +423,7 @@ const MiDisponibilidadPage = () => {
     }, [successMessage, error]);
 
 
-    // ---- MANEJADORES DE EVENTOS ----
+    // ---- EVENT HANDLERS ----
 
     const handleOpenModal = (record) => {
         setEditingRecord(record);
@@ -394,8 +437,7 @@ const MiDisponibilidadPage = () => {
 
     const handleEmptyCellClick = (dia, timeLabel) => {
         const startMinutes = timeStringToMinutes(timeLabel);
-        // Por defecto, crear un bloque de 90 minutos
-        const endMinutes = startMinutes + 90; 
+        const endMinutes = startMinutes + 90; // Default 90-minute block
         const formatMinutesToHHMM = (mins) => {
             const h = String(Math.floor(mins / 60)).padStart(2, '0');
             const m = String(mins % 60).padStart(2, '0');
@@ -403,7 +445,7 @@ const MiDisponibilidadPage = () => {
         };
 
         const newRecord = {
-            _id: `draft_${Date.now()}`, // ID temporal para un nuevo registro
+            _id: `draft_${Date.now()}`,
             dia,
             franja: `${formatMinutesToHHMM(startMinutes)}-${formatMinutesToHHMM(endMinutes)}`,
             sede1DePreferenciaPresencial: '',
@@ -412,12 +454,7 @@ const MiDisponibilidadPage = () => {
         handleOpenModal(newRecord);
     };
     
-    /**
-     * Guarda un registro localmente. Si es nuevo, lo añade. Si existe, lo actualiza.
-     * Implementa una lógica de fusión para evitar solapamientos.
-     */
     const handleLocalSave = useCallback((recordToSave) => {
-        // --- Lógica de Fusión de Horarios ---
         let finalRecord = { ...recordToSave };
         const [newStartMin, newEndMin] = formatFranjaForAPI(finalRecord.franja).split('-').map(timeStringToMinutes);
         
@@ -432,15 +469,13 @@ const MiDisponibilidadPage = () => {
 
         let mergedStartMin = newStartMin;
         let mergedEndMin = newEndMin;
-        let mergedHours = finalRecord.horasDisponiblesParaRealizarAcompaniamientoPresencial;
 
         otherRecordsOnSameDay.forEach(existing => {
             const [existingStartMin, existingEndMin] = formatFranjaForAPI(existing.franja).split('-').map(timeStringToMinutes);
-            // Comprobar si hay solapamiento o son adyacentes
+            // Check for overlap or adjacency
             if (mergedStartMin <= existingEndMin && mergedEndMin >= existingStartMin) {
                 mergedStartMin = Math.min(mergedStartMin, existingStartMin);
                 mergedEndMin = Math.max(mergedEndMin, existingEndMin);
-                // No sumar horas, se calcula en base a la franja final
                 overlappingRecordsIds.add(existing._id);
             }
         });
@@ -451,16 +486,13 @@ const MiDisponibilidadPage = () => {
             return `${h}${m}`;
         };
         
-        // Recalcular horas en base a la franja final
-        mergedHours = (mergedEndMin - mergedStartMin) / 60;
+        const mergedHours = (mergedEndMin - mergedStartMin) / 60;
 
         finalRecord.franja = `${formatMinutesToHHMM(mergedStartMin)}-${formatMinutesToHHMM(mergedEndMin)}`;
         finalRecord.horasDisponiblesParaRealizarAcompaniamientoPresencial = mergedHours;
         
         setDisponibilidad(prev => {
-            // Filtrar los registros que fueron fusionados
             const nonMerged = prev.filter(r => !overlappingRecordsIds.has(r._id));
-            // Añadir el nuevo registro (ya fusionado)
             return [...nonMerged, { ...finalRecord, _id: finalRecord._id.toString().startsWith('draft_') ? `saved_${Date.now()}` : finalRecord._id }];
         });
         
@@ -472,9 +504,6 @@ const MiDisponibilidadPage = () => {
         setSuccessMessage('Bloque eliminado localmente. Pulsa "Guardar en Servidor" para confirmar.');
     }, []);
 
-    /**
-     * Guarda TODO el calendario en el servidor.
-     */
     const handleGlobalSave = async () => {
         if (isSaving) return;
         
@@ -488,23 +517,25 @@ const MiDisponibilidadPage = () => {
         setError(null);
         setSuccessMessage('');
 
-        // Formatear el payload para la API
-        const payload = disponibilidad.map(r => ({
-            dni,
-            apellidosNombresCompletos: nombre,
-            dia: r.dia,
-            franja: formatFranjaForAPI(r.franja).replace('-', ' - '), // Asegura formato "HHMM - HHMM"
-            turno: timeStringToMinutes(formatFranjaForAPI(r.franja).split('-')[0]) < 720 ? "M" : "T", // Antes de las 12:00 es Mañana
+        const disponibilidades_payload = disponibilidad.map(r => ({
             sede1DePreferenciaPresencial: r.sede1DePreferenciaPresencial,
-            horasDisponiblesParaRealizarAcompaniamientoPresencial: r.horasDisponiblesParaRealizarAcompaniamientoPresencial
+            dia: r.dia,
+            franja: formatFranjaDisplay(r.franja), // Format back to "HH:MM - HH:MM" or similar for API
+            hora: timeStringToMinutes(formatFranjaForAPI(r.franja).split('-')[0]) < 720 ? "MAÑANA" : "TARDE",
+            turno: timeStringToMinutes(formatFranjaForAPI(r.franja).split('-')[0]) < 720 ? "M" : "T"
         }));
 
+        const payload = {
+            dni,
+            apellidosNombresCompletos: nombre,
+            horasDisponiblesParaRealizarAcompaniamientoPresencial: horasPresencialesAsignadas,
+            disponibilidades: disponibilidades_payload
+        };
+
         try {
-            const response = await fetch(`https://kali-ad-web.beesoftware.net/api/disponibilidad-acompaniamiento/especialista/${dni}/calendario`, {
+            const response = await fetch(`http://localhost:3001/api/disponibilidad-acompaniamiento/especialista/${dni}/calendario`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
@@ -514,16 +545,13 @@ const MiDisponibilidadPage = () => {
                 throw new Error(result.message || `Error del servidor: ${response.status}`);
             }
             
-            // Sincronizar el estado local con la respuesta del servidor
-            const processedData = result.nuevoCalendario.map(item => ({
-                ...item,
-                dia: (item.dia || '').toUpperCase().trim(),
-                franja: (item.franja || '').replace(/\s/g, ''),
-                horasDisponiblesParaRealizarAcompaniamientoPresencial: parseFloat(item.horasDisponiblesParaRealizarAcompaniamientoPresencial) || 0
-            }));
+            const processedData = processApiData(result.calendarioActualizado?.disponibilidades);
 
             setDisponibilidad(processedData);
-            setInitialDisponibilidad(JSON.parse(JSON.stringify(processedData))); // Actualizar estado inicial
+            setInitialDisponibilidad(JSON.parse(JSON.stringify(processedData)));
+            
+            setHorasPresencialesAsignadas(result.calendarioActualizado.horasDisponiblesParaRealizarAcompaniamientoPresencial || 0);
+            setInitialHorasPresenciales(result.calendarioActualizado.horasDisponiblesParaRealizarAcompaniamientoPresencial || 0);
 
             setSuccessMessage(result.message || "Calendario actualizado exitosamente.");
 
@@ -535,16 +563,26 @@ const MiDisponibilidadPage = () => {
         }
     };
 
-    // ---- CÁLCULOS Y MEMOS ----
-    const totalHorasSemana = useMemo(() => {
-        return disponibilidad.reduce((total, record) => total + (record.horasDisponiblesParaRealizarAcompaniamientoPresencial || 0), 0);
+    // ---- CALCULATIONS AND MEMOS ----
+    const { totalHorasEnCalendarioPresencial, totalHorasEnCalendarioRemoto } = useMemo(() => {
+        return disponibilidad.reduce((totals, record) => {
+            const hours = record.horasDisponiblesParaRealizarAcompaniamientoPresencial || 0;
+            if (record.sede1DePreferenciaPresencial === 'REM' || record.sede1DePreferenciaPresencial === 'VIR') {
+                totals.totalHorasEnCalendarioRemoto += hours;
+            } else {
+                totals.totalHorasEnCalendarioPresencial += hours;
+            }
+            return totals;
+        }, { totalHorasEnCalendarioPresencial: 0, totalHorasEnCalendarioRemoto: 0 });
     }, [disponibilidad]);
     
     const hasChanges = useMemo(() => {
-        return JSON.stringify(disponibilidad) !== JSON.stringify(initialDisponibilidad);
-    }, [disponibilidad, initialDisponibilidad]);
+        const blocksChanged = JSON.stringify(disponibilidad) !== JSON.stringify(initialDisponibilidad);
+        const presencialHoursChanged = horasPresencialesAsignadas !== initialHorasPresenciales;
+        return blocksChanged || presencialHoursChanged;
+    }, [disponibilidad, initialDisponibilidad, horasPresencialesAsignadas, initialHorasPresenciales]);
 
-    // ---- RENDERIZADO ----
+    // ---- RENDER ----
     if (isLoading) {
         return (
             <div className="flex flex-col justify-center items-center h-screen bg-gray-50">
@@ -557,28 +595,43 @@ const MiDisponibilidadPage = () => {
     return (
         <div className="bg-gray-100 min-h-screen p-4 sm:p-6 md:p-8 font-sans">
             <div className="mx-auto">
-                {/* Mensajes de feedback */}
+                {/* Feedback Messages */}
                 {error && <div className="fixed top-5 right-5 z-[100] p-4 bg-red-100 text-red-700 border border-red-300 rounded-lg shadow-lg flex items-center"><AlertTriangle className="h-5 w-5 mr-3"/>{error}</div>}
                 {successMessage && <div className="fixed top-5 right-5 z-[100] p-4 bg-green-100 text-green-800 border border-green-300 rounded-lg shadow-lg flex items-center"><CheckCircle className="h-5 w-5 mr-3"/>{successMessage}</div>}
 
-                {/* Encabezado */}
+                {/* Header */}
                 <header className="mb-6">
-                    <h1 className="text-3xl md:text-4xl font-bold text-gray-800">Mi Disponibilidad Horaria</h1>
+                    <h1 className="text-3xl md:text-4xl font-bold text-gray-800">Mi Disponibilidad</h1>
                     <div className="text-gray-600 mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
                         <span>{specialistInfo.nombre}</span>
                         <span className="hidden sm:inline">|</span>
                         <span>DNI: {specialistInfo.dni}</span>
                     </div>
                 </header>
+        
+                {/* Summary and Actions */}
+                <div className="bg-white rounded-t-lg shadow-lg p-4 flex flex-col lg:flex-row justify-between items-center gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 w-full lg:w-auto">
+                         <div className="flex items-center text-gray-700">
+                            <Home className="w-6 h-6 mr-3 text-teal-600 shrink-0"/>
+                            <div className="flex flex-col">
+                                <label className="text-sm font-medium">Total Horas</label>
+                                <div className="flex items-baseline gap-2">
+                                    <input 
+                                        type="number" 
+                                        value={horasPresencialesAsignadas}
+                                        onChange={(e) => setHorasPresencialesAsignadas(parseFloat(e.target.value) || 0)}
+                                        className="input-style w-24 font-bold text-teal-700 text-lg p-1"
+                                        min="0"
+                                        step="0.5"
+                                    />
+                                    <span className="text-xs text-gray-500 whitespace-nowrap"> (Calendario: {totalHorasEnCalendarioPresencial.toFixed(1)}h)</span>
+                                </div>
+                            </div>
+                        </div>
 
-                {/* Resumen y Acciones */}
-                <div className="bg-white rounded-t-lg shadow-lg p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <div className="flex items-center text-lg text-gray-700">
-                        <Briefcase className="w-6 h-6 mr-3 text-teal-600"/>
-                        <span>Total de Horas Presenciales:</span>
-                        <span className="font-bold text-teal-700 ml-2">{totalHorasSemana.toFixed(1)}h</span>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto shrink-0">
                         <button onClick={() => handleEmptyCellClick("LUNES", "08:00")} className="btn-secondary w-full sm:w-auto flex items-center justify-center">
                             <Plus size={20} className="mr-2"/>
                             Añadir Bloque
@@ -594,7 +647,7 @@ const MiDisponibilidadPage = () => {
                     </div>
                 </div>
 
-                {/* Calendario */}
+                {/* Calendar */}
                 <div className="overflow-x-auto custom-scrollbar">
                      <ScheduleCalendar 
                          records={disponibilidad} 
@@ -619,8 +672,9 @@ const MiDisponibilidadPage = () => {
                 .input-style { display: block; width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #D1D5DB; border-radius: 0.375rem; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; background-color: white; appearance: none; }
                 select.input-style { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
                 .input-style:focus { outline: 2px solid transparent; outline-offset: 2px; border-color: #14B8A6; box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.4); }
+                .input-style.w-24 { width: 6rem; }
                 .btn-primary { padding: 0.6rem 1.25rem; background-color: #0D9488; color: white; border-radius: 0.375rem; font-weight: 500; transition: all 0.2s; border: 1px solid transparent; }
-                .btn-primary:hover { background-color: #0F766E; }
+                .btn-primary:hover:not(:disabled) { background-color: #0F766E; }
                 .btn-secondary { padding: 0.6rem 1.25rem; background-color: #f9fafb; color: #374151; border-radius: 0.375rem; font-weight: 500; transition: all 0.2s; border: 1px solid #D1D5DB; }
                 .btn-secondary:hover { background-color: #F3F4F6; }
                 .btn-danger { padding: 0.6rem 1.25rem; background-color: #FEE2E2; color: #B91C1C; border-radius: 0.375rem; font-weight: 500; transition: background-color 0.2s; }

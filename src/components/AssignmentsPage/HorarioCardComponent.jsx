@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Mail, BookOpen, Calendar, Building, TrendingUp, Star, Search, X, Shield, Tag, Briefcase, AlertTriangle, ChevronLeft, ChevronRight, Clock, Loader, History, ChevronDown, Trash2, CheckCircle, UserCheck, MapPin } from 'lucide-react';
+import { Mail, BookOpen, Calendar, Edit, Building, TrendingUp, Star, Search, X, Shield, Tag, Briefcase, AlertTriangle, ChevronLeft, ChevronRight, Clock, Loader, History, ChevronDown, Trash2, CheckCircle, UserCheck, MapPin } from 'lucide-react';
 
 const getStatusStyles = (status) => {
     switch (status) {
@@ -24,30 +24,97 @@ const getStatusStyles = (status) => {
     }
 };
 
-const HorarioCardComponent = ({ horario }) => {
-    const styles = getStatusStyles(horario.estadoHistorico);
+const StatusBadge = ({ status }) => {
+    const baseClasses = "text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full";
+    const statusInfo = {
+        'NUEVO': "bg-green-200 text-green-800",
+        'MODIFICADO': "bg-yellow-200 text-yellow-800",
+        'DEFAULT': "bg-gray-200 text-gray-800"
+    };
+    const classes = `${baseClasses} ${statusInfo[status] || statusInfo['DEFAULT']}`;
+    return <span className={classes}>{status}</span>;
+};
+
+const HorarioCardComponent = ({teacher, curso, horario, onRegistrarRubrica, onClose}) => {
+
+    
+    // Función para formatear fechas en formato DD/MM/AAAA
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
-        try { return new Date(dateString).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }); } catch (e) { return 'Fecha inválida'; }
+        try {
+            const date = new Date(dateString);
+            const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+            return new Date(date.getTime() + userTimezoneOffset).toLocaleDateString('es-ES', {
+                day: '2-digit', month: '2-digit', year: 'numeric'
+            });
+        } catch (e) {
+            console.error("Error al formatear la fecha:", e);
+            return 'Fecha inválida';
+        }
     };
+
     return (
-        <div className={`border-t border-gray-200 mt-3 pt-3 p-2 rounded-md ${styles.border} relative`}>
-            {horario.acompanamiento && (
-                <div className="absolute top-2.5 right-2" title={`Acompañamiento: ${horario.acompanamiento.nombreEspecialista} (${horario.acompanamiento.estado})`}>
-                    <UserCheck className="text-blue-600" size={18} />
+        // Contenedor principal de la tarjeta: fondo claro, borde definido y sombra para destacar
+        <div className="bg-white border-2 border-gray-200 rounded-2xl shadow-md overflow-hidden mt-4 transition-all duration-300 hover:shadow-lg hover:border-blue-300">
+            <div className="flex flex-col md:flex-row">
+
+                {/* --- SECCIÓN IZQUIERDA: INFORMACIÓN PRINCIPAL DEL HORARIO --- */}
+                <div className="p-5 flex-grow">
+                    {/* Día y Hora: Información más relevante con texto grande */}
+                    <div className="flex items-center gap-4 mb-4">
+                        <Clock className="text-blue-500" size={28} />
+                        <div>
+                            <p className="text-lg font-bold text-gray-800">{horario.dia || 'Día no especificado'}</p>
+                            <p className="text-base text-gray-600">{horario.hora || 'Hora no especificada'}</p>
+                        </div>
+                    </div>
+
+                    {/* Ubicación: Campus y Aula */}
+                    <div className="flex items-center gap-4 mb-4">
+                        <MapPin className="text-green-600" size={28} />
+                        <div>
+                            <p className="font-semibold text-gray-700">{horario.campus || 'Campus no especificado'}</p>
+                            <p className="text-sm text-gray-500">Aula: {horario.aula || 'N/A'}</p>
+                        </div>
+                    </div>
+
+                    {/* Periodo del curso */}
+                    <div className="flex items-center gap-4">
+                        <Calendar className="text-red-500" size={28} />
+                        <div>
+                            <p className="font-semibold text-gray-700">Periodo del Curso</p>
+                            <p className="text-sm text-gray-500">{formatDate(horario.fechaInicio)} - {formatDate(horario.fechaFin)}</p>
+                        </div>
+                    </div>
                 </div>
-            )}
-            {horario.estadoHistorico && (
-                <div className="absolute top-9 right-2">
-                    <StatusBadge status={horario.estadoHistorico} />
+
+                {/* --- SECCIÓN DERECHA: ESTADO Y ACCIONES --- */}
+                <div className="bg-blue-50 p-5 flex flex-col justify-center items-center gap-4 md:w-1/3 border-t-2 md:border-t-0 md:border-l-2 border-gray-200">
+                    
+                    {/* Información de Acompañamiento */}
+                    {horario.acompanamiento && (
+                        <div className="flex items-center gap-2 bg-blue-100 text-blue-800 py-1.5 px-3 rounded-full text-sm font-medium">
+                            <UserCheck size={16} />
+                            <span>{horario.acompanamiento.nombreEspecialista}</span>
+                        </div>
+                    )}
+                    
+                    {/* Estado del Horario */}
+                    {horario.estadoHistorico && <StatusBadge status={horario.estadoHistorico} />}
+
+                    {/* Botón de Acción Principal: Registrar Rúbrica */}
+                    <button
+                        onClick={() => { onRegistrarRubrica("687fd14a4f377b9b2ce3457a", teacher, curso, horario); onClose(); }}
+                        className="w-full flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-bold text-base py-3 px-4 rounded-xl shadow-lg transform transition-transform duration-200 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300"
+                        title="Hacer clic para registrar la rúbrica de este horario"
+                    >
+                        <Edit size={20} />
+                        Registrar Rúbrica
+                    </button>
+
+                    
                 </div>
-            )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm text-gray-600">
-                <p><strong>Campus:</strong> {horario.campus || 'N/A'}</p>
-                <p><strong>Aula:</strong> {horario.aula || 'N/A'}</p>
-                <p><strong>Día:</strong> {horario.dia || 'N/A'}</p>
-                <p><strong>Hora:</strong> {horario.hora || 'N/A'}</p>
-                <p className="sm:col-span-2"><strong>Periodo:</strong> {formatDate(horario.fechaInicio)} - {formatDate(horario.fechaFin)}</p>
+
             </div>
         </div>
     );
