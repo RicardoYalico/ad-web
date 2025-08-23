@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 // --- Componente Principal ---
 // Gestiona dos funcionalidades principales a través de pestañas:
@@ -107,14 +107,14 @@ export default function DisponibilidadAcompaniamientoPage() {
               };
             });
             setJsonData(transformedData);
-          } catch (err) {
-            setError('Ocurrió un error al procesar el archivo. Asegúrate de que las columnas son correctas.');
+          } catch {
+              setError('Ocurrió un error al procesar el archivo. Asegúrate de que las columnas son correctas.');
           }
         };
         reader.readAsBinaryString(file);
-      } catch (err) {
-        setError('No se pudo cargar la librería de Excel. Revisa tu conexión a internet.');
-      }
+        } catch {
+          setError('No se pudo cargar la librería de Excel. Revisa tu conexión a internet.');
+        }
     };
 
     return (
@@ -403,6 +403,7 @@ export default function DisponibilidadAcompaniamientoPage() {
   return (
     <div className="bg-slate-900 text-white min-h-screen flex flex-col items-center p-4 font-sans">
       <div className="w-full max-w-6xl mx-auto bg-slate-800 rounded-xl shadow-2xl p-6 md:p-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-cyan-400 mb-6">Gestión Disponibilidad EP</h1>
         <div className="border-b border-slate-600 mb-6">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
             <button onClick={() => setActiveTab('editor')} className={`${activeTab === 'editor' ? 'border-cyan-500 text-cyan-400' : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg`}>Ver y Editar Disponibilidad</button>
