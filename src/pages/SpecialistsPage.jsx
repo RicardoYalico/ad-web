@@ -1,607 +1,417 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Users, CalendarDays, ListChecks, AlertTriangle, Loader2, PlusCircle, Edit3, Trash2, Save, Eye, XCircle, ChevronDown, ChevronUp, Briefcase, Home, UsersRound, SlidersHorizontal, UserCheck, Info, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 
-// --- CONSTANTES Y HELPERS GLOBALES ---
-const DIAS_SEMANA_ORDEN = ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO", "DOMINGO"];
-const CALENDAR_TIME_SLOTS_START_HOUR = 7;
-const CALENDAR_TIME_SLOTS_END_HOUR = 22;
-const PREVIEW_TIME_SLOTS_COUNT = (CALENDAR_TIME_SLOTS_END_HOUR - CALENDAR_TIME_SLOTS_START_HOUR) * 2;
+// --- Componente Principal ---
+// Gestiona dos funcionalidades principales a través de pestañas:
+// 1. Carga Masiva: Sube un archivo XLSX para crear múltiples registros.
+// 2. Ver y Editar: Busca un especialista por DNI para ver y editar su perfil y horarios.
+export default function DisponibilidadAcompaniamientoPage() {
+  const [activeTab, setActiveTab] = useState('editor'); // 'uploader' o 'editor'
 
-const calendarTimeLabels = Array.from({ length: PREVIEW_TIME_SLOTS_COUNT }, (_, i) => {
-    const currentHour = CALENDAR_TIME_SLOTS_START_HOUR + Math.floor(i / 2);
-    const currentMinute = (i % 2) * 30;
-    return `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
-});
+  // --- Componente de la Pestaña de Carga Masiva ---
+  const UploaderView = () => {
+    const [jsonData, setJsonData] = useState(null);
+    const [error, setError] = useState('');
+    const [apiStatus, setApiStatus] = useState('idle');
+    const [successMessage, setSuccessMessage] = useState('');
 
-const timeStringToTotalMinutes = (timeStr) => {
-    if (!timeStr || typeof timeStr !== 'string') return -1;
-    const cleanedTime = timeStr.replace(':', '').trim();
-    
-    let hours, minutes;
-    if (cleanedTime.length === 3) {
-        hours = parseInt(cleanedTime.substring(0, 1), 10);
-        minutes = parseInt(cleanedTime.substring(1, 3), 10);
-    } else if (cleanedTime.length === 4) {
-        hours = parseInt(cleanedTime.substring(0, 2), 10);
-        minutes = parseInt(cleanedTime.substring(2, 4), 10);
-    } else {
-        return -1;
-    }
-
-    if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
-        return -1;
-    }
-    return hours * 60 + minutes;
-};
-
-const formatFranja = (franja) => {
-    if (!franja || typeof franja !== 'string' || !franja.includes('-')) return franja;
-
-    const formatTime = (timeStr) => {
-        const cleaned = timeStr.replace(':', '').padStart(4, '0');
-        if (cleaned.length === 4) {
-            return `${cleaned.substring(0, 2)}:${cleaned.substring(2, 4)}`;
-        }
-        return timeStr;
+    const normalizeKeys = (obj) => {
+      const newObj = {};
+      for (const key in obj) {
+        const normalizedKey = key.toLowerCase().replace(/\s+/g, '').replace(/^disponibilidad/, 'disponibilidad');
+        newObj[normalizedKey] = obj[key];
+      }
+      return newObj;
     };
 
-    const parts = franja.split('-').map(part => part.trim());
-    if (parts.length === 2) {
-        return `${formatTime(parts[0])} - ${formatTime(parts[1])}`;
-    }
-    return franja;
-};
-
-// --- DATOS DE DEMO ---
-const mockUsuarios = [
-    { id: 'user1', apellidosNombresCompletos: 'GARCIA PEREZ, JUAN CARLOS', dni: '12345678', preferenciaHorarios: 'Lunes 07:00-10:00, Lunes 11:30-12:30, Miércoles (AM), Viernes 1400-1600', sedePreferida: 'Central', email: 'juan.garcia@example.com', telefono: '987654321' },
-    { id: 'user2', apellidosNombresCompletos: 'LOPEZ TORRES, MARIA ELENA', dni: '87654321', preferenciaHorarios: 'Martes y Jueves (Todo el día)', sedePreferida: 'Norte', email: 'maria.lopez@example.com', telefono: '912345678' },
-    { id: 'user3', apellidosNombresCompletos: 'MARTINEZ ROJAS, PEDRO LUIS', dni: '11223344', preferenciaHorarios: 'Viernes (PM) y Sábados 0900-1300', sedePreferida: 'Sur', email: 'pedro.martinez@example.com', telefono: '998877665' },
-    { id: 'user4', apellidosNombresCompletos: 'SANCHEZ DIAZ, ANA SOFIA', dni: '44556677', preferenciaHorarios: 'Lunes a Viernes (Interdiario PM)', sedePreferida: 'Central', email: 'ana.sanchez@example.com', telefono: '965432109' },
-    { id: 'user5', apellidosNombresCompletos: 'FLORES QUISPE, ROSA ISABEL', dni: '22334455', preferenciaHorarios: 'Miércoles (Todo el día), Jueves 10:00-12:30 y 14:00-16:00', sedePreferida: 'Este', email: 'rosa.flores@example.com', telefono: '955512345' },
-];
-
-const mockDisponibilidadesIniciales = [
-    { id: 'disp1', userId: 'user1', horasDisponiblesParaRealizarAcompaniamientoPresencial: 2, horasDisponiblesParaRealizarAcompaniamientoRemoto: 0, sede1DePreferenciaPresencial: 'Central', dia: 'LUNES', franja: '0800-1000', hora: '08:00', turno: 'MAÑANA' },
-    { id: 'disp2', userId: 'user1', horasDisponiblesParaRealizarAcompaniamientoPresencial: 0, horasDisponiblesParaRealizarAcompaniamientoRemoto: 3, sede1DePreferenciaPresencial: 'Remoto', dia: 'MIERCOLES', franja: '0900-1200', hora: '09:00', turno: 'MAÑANA' },
-    { id: 'disp3', userId: 'user2', horasDisponiblesParaRealizarAcompaniamientoPresencial: 4, horasDisponiblesParaRealizarAcompaniamientoRemoto: 0, sede1DePreferenciaPresencial: 'Norte', dia: 'MARTES', franja: '1400-1800', hora: '14:00', turno: 'TARDE' },
-];
-
-
-// --- COMPONENTES ---
-
-const EditAvailabilityModal = ({ isOpen, onClose, record, onSave, onDelete }) => {
-    const [editableRecord, setEditableRecord] = useState(null);
-    const [franjaInicio, setFranjaInicio] = useState('');
-    const [franjaFin, setFranjaFin] = useState('');
-    const [modalError, setModalError] = useState('');
-
-    useEffect(() => {
-        if (record) {
-            setEditableRecord({ ...record });
-            setModalError('');
-            if (record.franja && record.franja.includes('-')) {
-                const parts = record.franja.split('-').map(s => s.trim().replace(':', ''));
-                setFranjaInicio(parts[0]);
-                setFranjaFin(parts[1]);
-            } else {
-                setFranjaInicio('');
-                setFranjaFin('');
-            }
-        }
-    }, [record]);
-
-    if (!isOpen || !editableRecord) return null;
-
-    const handleChange = (e) => {
-        const { name, value, type } = e.target;
-        if (name === "franjaInicio") {
-            setFranjaInicio(value);
-        } else if (name === "franjaFin") {
-            setFranjaFin(value);
-        } else {
-            setEditableRecord(prev => ({ ...prev, [name]: type === 'number' ? parseFloat(value) || 0 : value }));
-        }
+    const parseAvailability = (day, availabilityString) => {
+      if (!availabilityString || typeof availabilityString !== 'string') return [];
+      return availabilityString.split(';').map(s => s.trim()).filter(s => s).map(franjaCompleta => {
+        const match = franjaCompleta.match(/\d/);
+        if (!match) return null;
+        const timeString = franjaCompleta.substring(match.index);
+        const padTime = (timeStr) => timeStr.replace(/:/g, '').trim().padStart(4, '0');
+        const timeParts = timeString.replace(/am|pm/gi, '').split('-');
+        if (timeParts.length !== 2) return null;
+        const startTime = padTime(timeParts[0]);
+        const endTime = padTime(timeParts[1]);
+        return { dia: day.toUpperCase(), franja: `${startTime} - ${endTime}` };
+      }).filter(Boolean);
     };
 
-    const handleSave = () => {
-        setModalError('');
-        const inicioMinutes = timeStringToTotalMinutes(franjaInicio);
-        const finMinutes = timeStringToTotalMinutes(franjaFin);
+    const handleApiSubmit = async () => {
+      if (!jsonData || jsonData.length === 0) {
+        setError("No hay datos para enviar.");
+        return;
+      }
+      setApiStatus('loading');
+      setError('');
+      setSuccessMessage('');
+      try {
+        const response = await fetch('http://localhost:3001/api/disponibilidad-acompaniamiento/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(jsonData),
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          let errorMessage = result.message || 'Ocurrió un error desconocido.';
+          if (result.details && Array.isArray(result.details)) {
+            const detailsString = result.details.map(d => `DNI ${d.failedDocumentPreview?.dni || 'desconocido'}`).join(', ');
+            errorMessage += ` Detalles: ${detailsString} podrían estar duplicados.`;
+          }
+          throw new Error(errorMessage);
+        }
+        setApiStatus('success');
+        setSuccessMessage(result.message || "¡Datos enviados con éxito!");
+      } catch (err) {
+        setApiStatus('error');
+        setError(err.message || 'Error de conexión. No se pudo conectar con el servidor.');
+      }
+    };
 
-        if (inicioMinutes === -1 || finMinutes === -1) {
-            setModalError("Formato de hora inválido. Use HHMM o HMM.");
-            return;
-        }
-        if (inicioMinutes >= finMinutes) {
-            setModalError("La hora de inicio debe ser anterior a la hora de fin.");
-            return;
-        }
-        
-        const updatedRecordWithFranja = { 
-            ...editableRecord, 
-            franja: `${franjaInicio.replace(':', '')}-${franjaFin.replace(':', '')}`
+    const handleFileUpload = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const validExtensions = ['xlsx'];
+      if (!validExtensions.includes(file.name.split('.').pop().toLowerCase())) {
+        setError('Formato de archivo no válido. Por favor, sube un archivo .xlsx');
+        setJsonData(null);
+        return;
+      }
+      setError('');
+      setJsonData(null);
+      setApiStatus('idle');
+      setSuccessMessage('');
+      try {
+        const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.2/package/xlsx.mjs');
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          try {
+            const bstr = evt.target.result;
+            const wb = XLSX.read(bstr, { type: 'binary' });
+            const wsname = wb.SheetNames[0];
+            const ws = wb.Sheets[wsname];
+            const data = XLSX.utils.sheet_to_json(ws);
+            const transformedData = data.map(row => {
+              const normalizedRow = normalizeKeys(row);
+              return {
+                nombre: String(normalizedRow.nombre || '').trim().toUpperCase(),
+                dni: String(normalizedRow.dni || '').trim(),
+                antiguedad: String(normalizedRow.antiguedad || '').trim().toUpperCase(),
+                notaRubrica: String(normalizedRow.notarubrica || '').trim(),
+                disponibilidadHoras: Number(normalizedRow.disponibilidadhoras) || 0,
+                segmentosPreferencia: (normalizedRow.segmentospreferencia || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean),
+                modalidadPreferencia: (normalizedRow.modalidadpreferencia || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean),
+                sedePreferencia: (normalizedRow.sedepreferencia || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean),
+                horarios: ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'].flatMap(dia => parseAvailability(dia, normalizedRow[`disponibilidad${dia}`])),
+              };
+            });
+            setJsonData(transformedData);
+          } catch (err) {
+            setError('Ocurrió un error al procesar el archivo. Asegúrate de que las columnas son correctas.');
+          }
         };
-        onSave(updatedRecordWithFranja);
-        onClose();
+        reader.readAsBinaryString(file);
+      } catch (err) {
+        setError('No se pudo cargar la librería de Excel. Revisa tu conexión a internet.');
+      }
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-[70] p-4">
-            <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-lg">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-semibold text-gray-800">{String(editableRecord.id).startsWith('draft_') ? "Añadir Disponibilidad" : "Editar Disponibilidad"}</h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><XCircle size={24}/></button>
-                </div>
-                
-                {modalError && (
-                    <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded-md mb-4 text-sm">
-                        {modalError}
-                    </div>
-                )}
-
-                <div className="space-y-4">
-                    <p className="text-sm"><strong>Día:</strong> {editableRecord.dia}</p>
-                     <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label htmlFor="edit-avail-franjaInicio" className="block text-xs font-medium text-gray-700">Hora Inicio (HHMM)*</label>
-                            <input type="text" id="edit-avail-franjaInicio" name="franjaInicio" value={franjaInicio} onChange={handleChange} placeholder="0800" className="mt-1 input-style py-2"/>
-                        </div>
-                        <div>
-                            <label htmlFor="edit-avail-franjaFin" className="block text-xs font-medium text-gray-700">Hora Fin (HHMM)*</label>
-                            <input type="text" id="edit-avail-franjaFin" name="franjaFin" value={franjaFin} onChange={handleChange} placeholder="1030" className="mt-1 input-style py-2"/>
-                        </div>
-                    </div>
-                    <div>
-                        <label htmlFor="edit-avail-sede" className="block text-xs font-medium text-gray-700">Sede*</label>
-                        <input type="text" id="edit-avail-sede" name="sede1DePreferenciaPresencial" value={editableRecord.sede1DePreferenciaPresencial} onChange={handleChange} className="mt-1 input-style py-2"/>
-                    </div>
-                    <div>
-                        <label htmlFor="edit-avail-turno" className="block text-xs font-medium text-gray-700">Turno</label>
-                        <select id="edit-avail-turno" name="turno" value={editableRecord.turno} onChange={handleChange} className="mt-1 select-style py-2">
-                            <option value="">Seleccione</option><option value="MAÑANA">MAÑANA</option><option value="TARDE">TARDE</option><option value="NOCHE">NOCHE</option>
-                        </select>
-                    </div>
-                     <div>
-                        <label htmlFor="edit-avail-hpres" className="block text-xs font-medium text-gray-700">Horas Presencial (ej: 2.5)</label>
-                        <input type="number" id="edit-avail-hpres" name="horasDisponiblesParaRealizarAcompaniamientoPresencial" value={editableRecord.horasDisponiblesParaRealizarAcompaniamientoPresencial} onChange={handleChange} min="0" step="0.5" className="mt-1 input-style py-2"/>
-                    </div>
-                    <div>
-                        <label htmlFor="edit-avail-hrem" className="block text-xs font-medium text-gray-700">Horas Remoto (ej: 1.5)</label>
-                        <input type="number" id="edit-avail-hrem" name="horasDisponiblesParaRealizarAcompaniamientoRemoto" value={editableRecord.horasDisponiblesParaRealizarAcompaniamientoRemoto} onChange={handleChange} min="0" step="0.5" className="mt-1 input-style py-2"/>
-                    </div>
-                    <div className="flex justify-between items-center pt-3">
-                        <button onClick={() => {onDelete(editableRecord.id); onClose();}} className="px-4 py-2 text-sm font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-md">Eliminar</button>
-                        <div className="flex space-x-3">
-                            <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md">Cancelar</button>
-                            <button onClick={handleSave} className="px-4 py-2 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-md">Guardar</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+      <>
+        <div className="bg-slate-900/50 border border-dashed border-slate-600 rounded-lg p-8 text-center cursor-pointer hover:border-cyan-400 transition-colors duration-300">
+          <label htmlFor="file-upload" className="cursor-pointer">
+            <svg className="mx-auto h-12 w-12 text-slate-500" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <p className="mt-4 text-lg text-slate-300"><span className="font-semibold text-cyan-400">Haz clic para subir</span> o arrastra y suelta</p>
+            <p className="text-xs text-slate-500 mt-1">Solo archivos .XLSX para carga masiva</p>
+          </label>
+          <input id="file-upload" name="file-upload" type="file" className="sr-only" accept=".xlsx" onChange={handleFileUpload} />
         </div>
+        <div className="mt-8">
+          {error && <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg" role="alert"><strong className="font-bold">Error: </strong><span className="block sm:inline">{error}</span></div>}
+          {jsonData && (
+            <div>
+              <h3 className="text-2xl font-semibold text-cyan-400 mb-4">Datos Procesados</h3>
+              <div className="bg-slate-900 rounded-lg p-4 max-h-[400px] overflow-auto"><pre className="text-sm text-slate-300 whitespace-pre-wrap break-all">{JSON.stringify(jsonData, null, 2)}</pre></div>
+              <div className="mt-6 text-center">
+                <button onClick={handleApiSubmit} disabled={apiStatus === 'loading'} className="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 disabled:bg-slate-600 disabled:cursor-not-allowed text-lg">{apiStatus === 'loading' ? 'Enviando...' : 'Enviar a API'}</button>
+                {apiStatus === 'success' && <p className="text-green-400 mt-4">{successMessage}</p>}
+              </div>
+            </div>
+          )}
+        </div>
+      </>
     );
-};
+  };
 
-const GeminiAnalysis = ({ teacher, records }) => {
-    const [isLoading, setIsLoading] = useState(false);
-    const [analysis, setAnalysis] = useState('');
+  // --- Componente de la Pestaña de Edición y Visualización ---
+  const EditorView = () => {
+    const [dni, setDni] = useState('');
+    const [specialist, setSpecialist] = useState(null);
+    const [originalSpecialist, setOriginalSpecialist] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editableData, setEditableData] = useState({});
     const [error, setError] = useState('');
+    const [status, setStatus] = useState('idle'); // idle, loading, success, error
+    const [downloadStatus, setDownloadStatus] = useState('idle'); // idle, loading, error
+    const [downloadError, setDownloadError] = useState('');
 
-    const handleAnalysis = async () => {
-        setIsLoading(true);
-        setAnalysis('');
+    const handleSearch = async (e) => {
+        e.preventDefault();
+        if (!dni) {
+            setError('Por favor, ingresa un DNI para buscar.');
+            return;
+        }
+        setStatus('loading');
         setError('');
-
-        const scheduleSummary = records.map(r => `- ${r.dia}: ${formatFranja(r.franja)} (Presencial: ${r.horasDisponiblesParaRealizarAcompaniamientoPresencial}h, Remoto: ${r.horasDisponiblesParaRealizarAcompaniamientoRemoto}h)`).join('\n');
-
-        const prompt = `
-            Eres un asistente experto en planificación de horarios.
-            Analiza la siguiente información para el especialista ${teacher.apellidosNombresCompletos} y proporciona un resumen y recomendaciones.
-
-            Contexto:
-            - Preferencias de horario declaradas por el especialista: "${teacher.preferenciaHorarios}"
-            - Disponibilidad registrada actualmente en el sistema:
-            ${scheduleSummary.length > 0 ? scheduleSummary : "No hay disponibilidad registrada."}
-
-            Análisis requerido:
-            1.  **Resumen Breve:** Compara las preferencias con la disponibilidad registrada.
-            2.  **Inconsistencias:** Señala si hay bloques de disponibilidad que no coinciden con sus preferencias (ej. registró disponibilidad en un día que dijo no poder).
-            3.  **Sugerencias de Optimización:** Basado en sus preferencias, sugiere dónde podría añadir más horas o si algún bloque actual podría ser ajustado para un mejor balance.
-            4.  **Formato:** Responde en español, de forma concisa y clara, usando Markdown para el formato (listas, negritas). No uses títulos para las secciones.
-        `;
-
+        setSpecialist(null);
         try {
-            let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
-            const payload = { contents: chatHistory };
-            const apiKey = ""; 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-            
-            const response = await fetch(apiUrl, {
-                method: 'POST',
+            const response = await fetch(`http://localhost:3001/api/disponibilidad-acompaniamiento?dniEspecialista=${dni}`);
+            const data = await response.json();
+            if (!response.ok || data.length === 0) {
+                throw new Error('Especialista no encontrado o error en la respuesta.');
+            }
+            setSpecialist(data[0]);
+            setOriginalSpecialist(JSON.parse(JSON.stringify(data[0]))); // Deep copy
+            setEditableData({
+                segmentosPreferencia: data[0].segmentosPreferencia.join(', '),
+                modalidadPreferencia: data[0].modalidadPreferencia.join(', '),
+                sedePreferencia: data[0].sedePreferencia.join(', '),
+                notaRubrica: data[0].notaRubrica || '',
+            });
+            setStatus('success');
+        } catch (err) {
+            setStatus('error');
+            setError(err.message);
+        }
+    };
+
+    const handleUpdate = async () => {
+        setStatus('loading');
+        setError('');
+        try {
+            const payload = {
+                segmentosPreferencia: editableData.segmentosPreferencia.split(',').map(s => s.trim().toUpperCase()).filter(Boolean),
+                modalidadPreferencia: editableData.modalidadPreferencia.split(',').map(s => s.trim().toUpperCase()).filter(Boolean),
+                sedePreferencia: editableData.sedePreferencia.split(',').map(s => s.trim().toUpperCase()).filter(Boolean),
+                notaRubrica: editableData.notaRubrica,
+                horarios: specialist.horarios, // Enviar el array de horarios actualizado
+            };
+
+            const response = await fetch(`http://localhost:3001/api/disponibilidad-acompaniamiento/especialista/${specialist.dni}/perfil`, {
+                method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
             });
 
-            if (!response.ok) {
-                throw new Error(`Error de API: ${response.statusText}`);
-            }
-
             const result = await response.json();
+            if (!response.ok) throw new Error(result.message || 'Error al actualizar el perfil.');
             
-            if (result.candidates && result.candidates.length > 0 && result.candidates[0].content && result.candidates[0].content.parts && result.candidates[0].content.parts.length > 0) {
-                const text = result.candidates[0].content.parts[0].text;
-                setAnalysis(text);
-            } else {
-                throw new Error("La respuesta de la API no contiene el formato esperado.");
-            }
-
+            // Actualizar el estado original para reflejar los cambios guardados
+            setOriginalSpecialist(JSON.parse(JSON.stringify(specialist)));
+            setIsEditing(false);
+            setStatus('success');
         } catch (err) {
-            setError('No se pudo obtener el análisis. Por favor, inténtalo de nuevo.');
-            console.error(err);
-        } finally {
-            setIsLoading(false);
+            setStatus('error');
+            setError(err.message);
         }
     };
-
-    return (
-        <div className="mt-4 p-4 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-                <h4 className="text-md font-semibold text-gray-700 flex items-center">
-                    <Sparkles className="w-5 h-5 mr-2 text-purple-500"/>
-                    Análisis con IA
-                </h4>
-                <button 
-                    onClick={handleAnalysis} 
-                    disabled={isLoading}
-                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:bg-purple-300"
-                >
-                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : 'Analizar Horario'}
-                </button>
-            </div>
-            {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
-            {analysis && (
-                <div 
-                    className="mt-3 p-3 bg-purple-50/50 border border-purple-200 rounded-lg text-sm text-gray-800 space-y-2" 
-                    dangerouslySetInnerHTML={{ __html: analysis.replace(/\n/g, '<br />').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}
-                />
-            )}
-        </div>
-    );
-};
-
-
-const WeeklyScheduleModal = ({ isOpen, onClose, teacher, records, onEditSlot, onEmptyCellClick }) => {
-    if (!isOpen || !teacher) return null;
     
-    const teacherRecords = useMemo(() => {
-        if (!teacher) return [];
-        return records.filter(r => r.userId === teacher.id);
-    }, [teacher, records]);
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setEditableData(prev => ({ ...prev, [name]: value }));
+    };
 
-    const { totalWeekPresencial, totalWeekRemoto } = useMemo(() => {
-        return teacherRecords.reduce((totals, record) => {
-            totals.totalWeekPresencial += Number(record.horasDisponiblesParaRealizarAcompaniamientoPresencial) || 0;
-            totals.totalWeekRemoto += Number(record.horasDisponiblesParaRealizarAcompaniamientoRemoto) || 0;
-            return totals;
-        }, { totalWeekPresencial: 0, totalWeekRemoto: 0 });
-    }, [teacherRecords]);
+    const handleToggleHorario = (dia, franja) => {
+        setSpecialist(prev => {
+            const newHorarios = [...prev.horarios];
+            const horarioIndex = newHorarios.findIndex(h => h.dia === dia && h.franja === franja);
 
-    const teacherSchedule = useMemo(() => {
-        const schedule = {};
-        DIAS_SEMANA_ORDEN.forEach(dia => schedule[dia] = []);
-        teacherRecords.forEach(r => {
-            const diaKey = r.dia.toUpperCase();
-            if (schedule[diaKey]) {
-                schedule[diaKey].push(r);
+            if (horarioIndex > -1) {
+                // Si existe, lo elimina
+                newHorarios.splice(horarioIndex, 1);
+            } else {
+                // Si no existe, lo agrega
+                newHorarios.push({ dia, franja });
             }
+            return { ...prev, horarios: newHorarios };
         });
-        return schedule;
-    }, [teacherRecords]);
-
-    const timeToRowIndex = (timeStr) => {    
-        const totalMins = timeStringToTotalMinutes(timeStr);
-        if (totalMins === -1) return -1;
-        const minutesFromCalendarStart = totalMins - (CALENDAR_TIME_SLOTS_START_HOUR * 60);
-        return Math.max(0, Math.floor(minutesFromCalendarStart / 30));
     };
 
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-md flex justify-center items-center p-4 z-50 transition-opacity duration-300 ease-in-out" style={{ opacity: isOpen ? 1 : 0, pointerEvents: isOpen ? 'auto' : 'none' }} onClick={onClose}>
-            <div className="bg-gradient-to-br from-white to-gray-50 p-4 sm:p-6 rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col transform transition-all duration-300 ease-in-out" style={{ opacity: isOpen ? 1 : 0, transform: isOpen ? 'translateY(0)' : 'translateY(-20px)' }} onClick={(e) => e.stopPropagation()}>
-                <div className="flex justify-between items-start mb-4 sm:mb-5 pb-3 sm:pb-4 border-b border-gray-300">
-                    <div>
-                        <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-teal-700">Horario Semanal: <span className="text-teal-600">{teacher.apellidosNombresCompletos}</span></h3>
-                        <p className="text-sm sm:text-base text-gray-600">DNI: {teacher.dni}</p>
-                        <p className="text-xs sm:text-sm text-gray-500 mt-1">Preferencias: {teacher.preferenciaHorarios}</p>
-                    </div>
-                    <button onClick={onClose} className="text-gray-500 hover:text-red-600 transition-colors p-1 rounded-full hover:bg-red-100 flex-shrink-0"><XCircle size={window.innerWidth < 640 ? 28 : 32} /></button>
-                </div>
-                <div className="mb-3 sm:mb-4 flex flex-wrap gap-x-4 sm:gap-x-6 gap-y-2 text-sm sm:text-base">
-                    <p className="font-semibold text-gray-700">Total Horas Disponibles:</p>
-                    <span className="text-green-700 font-medium flex items-center"><Briefcase size={window.innerWidth < 640 ? 16 : 18} className="mr-1.5"/> Presencial: {totalWeekPresencial}h</span>
-                    <span className="text-blue-700 font-medium flex items-center"><Home size={window.innerWidth < 640 ? 16 : 18} className="mr-1.5"/> Remoto: {totalWeekRemoto}h</span>
-                </div>
-                <div className="flex-grow overflow-auto pr-1 custom-scrollbar">
-                    <div className="flex">
-                        <div className="w-16 sm:w-20 shrink-0 pt-[2.5rem] sm:pt-[2.75rem]">
-                            {calendarTimeLabels.map(label => (<div key={`time-${label}`} className="h-10 flex items-center justify-end pr-1 text-xs text-gray-500 border-r border-gray-200">{label}</div>))}
-                        </div>
-                        <div className="flex-grow grid grid-cols-7 gap-px bg-gray-200 border-t border-l border-gray-200 rounded-tr-lg">
-                            {DIAS_SEMANA_ORDEN.map(dia => (<div key={`header-day-${dia}`} className="h-10 bg-gray-100 p-1.5 text-center text-xs sm:text-sm font-semibold text-gray-600 capitalize border-r border-b border-gray-200 flex items-center justify-center">{dia.substring(0,3)}</div>))}
-                            {DIAS_SEMANA_ORDEN.map((dia) => (
-                               <div key={`${dia}-slots-col`} className="relative bg-white border-r border-b border-gray-200">
-                                    {calendarTimeLabels.map((timeLabel, timeIdx) => (<div key={`bg-line-${dia}-${timeIdx}`} className="h-10 border-b border-gray-100 cursor-pointer hover:bg-teal-50" onClick={(e) => { e.stopPropagation(); onEmptyCellClick(dia, timeLabel); }}></div>))}
-                                    {(teacherSchedule[dia] || []).map(slot => {
-                                        if (!slot.franja || !slot.franja.includes('-')) return null;
-                                        const [startStr, endStr] = slot.franja.split('-').map(s => s.trim());
-                                        const startRow = timeToRowIndex(startStr); const endRow = timeToRowIndex(endStr);
-                                        if (startRow === -1 || endRow === -1 || startRow >= endRow) return null;
-                                        const durationInSlots = endRow - startRow; const slotHeightPx = 40; 
-                                        const topPositionPx = startRow * slotHeightPx; const blockHeightPx = durationInSlots * slotHeightPx;
-                                        const presencialHoras = Number(slot.horasDisponiblesParaRealizarAcompaniamientoPresencial) || 0; const remotoHoras = Number(slot.horasDisponiblesParaRealizarAcompaniamientoRemoto) || 0;
-                                        let bgColor = 'bg-gray-200 hover:bg-gray-300'; let borderColor = 'border-gray-400'; let textColor = 'text-gray-700';
-                                        if (presencialHoras > 0 && remotoHoras > 0) { bgColor = 'bg-purple-200 hover:bg-purple-300'; borderColor = 'border-purple-500'; textColor = 'text-purple-800';}
-                                        else if (presencialHoras > 0) { bgColor = 'bg-green-200 hover:bg-green-300'; borderColor = 'border-green-500'; textColor = 'text-green-800';}
-                                        else if (remotoHoras > 0) { bgColor = 'bg-blue-200 hover:bg-blue-300'; borderColor = 'border-blue-500'; textColor = 'text-blue-800';}
-                                        return (<div key={slot.id || `${slot.franja}-${slot.turno}`} 
-                                                     className={`absolute left-0.5 right-0.5 p-1 text-[10px] sm:text-xs rounded-md shadow-lg border-l-4 ${bgColor} ${borderColor} ${textColor} transition-all duration-150 ease-in-out cursor-pointer z-10 overflow-hidden hover:shadow-xl transform hover:-translate-y-0.5`} 
-                                                     style={{ top: `${topPositionPx}px`, height: `${blockHeightPx - 2}px` }}
-                                                     title={`Clic para editar: ${formatFranja(slot.franja)}\nSede: ${slot.sede1DePreferenciaPresencial}`}
-                                                     onClick={(e) => { e.stopPropagation(); onEditSlot(slot.id); }} 
-                                                     >
-                                                     <div className="font-bold text-[11px] sm:text-sm truncate">{formatFranja(slot.franja)}</div>
-                                                     {presencialHoras > 0 && <div className="flex items-center text-[10px] sm:text-xs"><Briefcase size={window.innerWidth < 640 ? 10:12} className="mr-0.5 sm:mr-1"/> P: {presencialHoras}h</div>}
-                                                     {remotoHoras > 0 && <div className="flex items-center text-[10px] sm:text-xs"><Home size={window.innerWidth < 640 ? 10:12} className="mr-0.5 sm:mr-1"/> R: {remotoHoras}h</div>}
-                                                     <div className="text-[9px] sm:text-[10px] text-gray-600 truncate mt-0.5">{slot.sede1DePreferenciaPresencial}</div>
-                                               </div>);
-                                    })}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-                <GeminiAnalysis teacher={teacher} records={teacherRecords} />
+    const handleCancelEdit = () => {
+        setSpecialist(originalSpecialist);
+        setIsEditing(false);
+        setError('');
+    };
+
+    // --- NUEVA FUNCIÓN: Descargar todo en XLSX ---
+    const handleDownloadAll = async () => {
+        setDownloadStatus('loading');
+        setDownloadError('');
+        try {
+            // 1. Obtener todos los datos de la API
+            const response = await fetch('http://localhost:3001/api/disponibilidad-acompaniamiento');
+            const allSpecialists = await response.json();
+
+            if (!response.ok || !allSpecialists || allSpecialists.length === 0) {
+                throw new Error('No se encontraron datos de disponibilidad para descargar.');
+            }
+
+            // 2. Transformar los datos al formato requerido
+            const flattenedData = [];
+            allSpecialists.forEach(specialist => {
+                const baseData = {
+                    'NOMBRE': specialist.nombre,
+                    'DNI': specialist.dni,
+                    'HORAS': specialist.disponibilidadHoras,
+                    'SEDES PREFERENCIA': specialist.sedePreferencia.join(', '),
+                    'MODALIDAD PREFERENCIA': specialist.modalidadPreferencia.join(', '),
+                };
+
+                if (specialist.horarios && specialist.horarios.length > 0) {
+                    specialist.horarios.forEach(horario => {
+                        flattenedData.push({
+                            ...baseData,
+                            'DIA': horario.dia,
+                            'HORA': horario.franja,
+                        });
+                    });
+                } else {
+                    // Incluir especialistas sin horarios definidos
+                    flattenedData.push({
+                        ...baseData,
+                        'DIA': 'N/A',
+                        'HORA': 'N/A',
+                    });
+                }
+            });
+            
+            // 3. Generar y descargar el archivo XLSX
+            const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.2/package/xlsx.mjs');
+            const ws = XLSX.utils.json_to_sheet(flattenedData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Disponibilidad Total");
+            XLSX.writeFile(wb, "disponibilidad_total.xlsx");
+
+            setDownloadStatus('idle');
+        } catch (err) {
+            setDownloadStatus('error');
+            setDownloadError(err.message || 'Ocurrió un error al generar el archivo.');
+        }
+    };
+
+    // --- Componente del Calendario ---
+    const CalendarView = ({ horarios, isEditing, onToggle }) => {
+        const dias = ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO", "DOMINGO"];
+        const franjasUnicas = [...new Set(horarios.map(h => h.franja))].sort();
+        const horariosMap = new Map(horarios.map(h => [`${h.dia}-${h.franja}`, true]));
+
+        return (
+            <div className="overflow-x-auto mt-6">
+                <table className="min-w-full bg-slate-900 border border-slate-700 text-center">
+                    <thead>
+                        <tr className="bg-slate-800">
+                            <th className="p-3 border-r border-slate-700">Horario</th>
+                            {dias.map(dia => <th key={dia} className="p-3">{dia}</th>)}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {franjasUnicas.map(franja => (
+                            <tr key={franja} className="border-t border-slate-700">
+                                <td className="p-3 font-mono border-r border-slate-700">{franja}</td>
+                                {dias.map(dia => (
+                                    <td 
+                                        key={`${dia}-${franja}`} 
+                                        className={`p-3 transition-colors duration-200 ${horariosMap.has(`${dia}-${franja}`) ? 'bg-cyan-500/50' : ''} ${isEditing ? 'cursor-pointer hover:bg-slate-700' : ''}`}
+                                        onClick={() => isEditing && onToggle(dia, franja)}
+                                    >
+                                        {horariosMap.has(`${dia}-${franja}`) ? '✓' : ''}
+                                    </td>
+                                ))}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
-        </div>
-    );
-};
-
-
-const GeneralScheduleModal = ({ isOpen, onClose, allDisponibilidades, usuarios }) => {
-    if (!isOpen) return null; 
-    const [selectedSlotDetails, setSelectedSlotDetails] = useState(null);
-    
-    const aggregatedSchedule = useMemo(() => { const density = {}; DIAS_SEMANA_ORDEN.forEach(dia => { density[dia] = {}; calendarTimeLabels.forEach(ts_label => { density[dia][ts_label] = { count: 0, specialistsDetails: [] }; }); }); allDisponibilidades.forEach(disp => { const usuario = usuarios.find(u => u.id === disp.userId); if (!usuario) return;  const diaKey = disp.dia.toUpperCase(); if (!DIAS_SEMANA_ORDEN.includes(diaKey)) return; if (disp.franja && disp.franja.includes('-')) { const [startStr, endStr] = disp.franja.split('-').map(s => s.trim()); const startMinutesTotal = timeStringToTotalMinutes(startStr); const endMinutesTotal = timeStringToTotalMinutes(endStr); if (startMinutesTotal === -1 || endMinutesTotal === -1 || startMinutesTotal >= endMinutesTotal) return; calendarTimeLabels.forEach((ts_label, timeIdx) => { const slotStartTotalMinutes = (CALENDAR_TIME_SLOTS_START_HOUR * 60) + timeIdx * 30; const slotEndTotalMinutes = slotStartTotalMinutes + 30; if (slotStartTotalMinutes < endMinutesTotal && slotEndTotalMinutes > startMinutesTotal) { density[diaKey][ts_label].count++; density[diaKey][ts_label].specialistsDetails.push({ id: disp.id, nombre: usuario.apellidosNombresCompletos, dni: usuario.dni, franja: disp.franja, sede: disp.sede1DePreferenciaPresencial, turno: disp.turno, hPresencial: disp.horasDisponiblesParaRealizarAcompaniamientoPresencial || 0, hRemoto: disp.horasDisponiblesParaRealizarAcompaniamientoRemoto || 0, }); } }); }}); return density; }, [allDisponibilidades, usuarios]);
-    
-    const getColorForCount = (count) => { if (count === 0) return 'bg-gray-100/50 hover:bg-gray-200/70'; if (count === 1) return 'bg-teal-100 hover:bg-teal-200'; if (count <= 3) return 'bg-teal-200 hover:bg-teal-300'; if (count <= 5) return 'bg-teal-300 hover:bg-teal-400'; if (count <= 7) return 'bg-teal-400 hover:bg-teal-500'; return 'bg-teal-500 hover:bg-teal-600';};
-    const handleCellClick = (day, timeLabel, data) => { if (data.count > 0) setSelectedSlotDetails({ day, timeLabel, specialists: data.specialistsDetails }); else setSelectedSlotDetails(null); };
-    
-    return ( <div className="fixed inset-0 bg-black bg-opacity-75 backdrop-blur-lg flex justify-center items-center p-4 z-[60] transition-opacity duration-300 ease-in-out" style={{ opacity: isOpen ? 1 : 0, pointerEvents: isOpen ? 'auto' : 'none' }} onClick={onClose}> <div className="bg-gradient-to-br from-white to-gray-100 p-5 rounded-xl shadow-2xl max-w-[95vw] xl:max-w-7xl w-full max-h-[95vh] flex flex-col transform transition-all duration-300 ease-in-out" style={{ opacity: isOpen ? 1 : 0, transform: isOpen ? 'translateY(0)' : 'translateY(-20px)' }} onClick={(e) => e.stopPropagation()}> <div className="flex justify-between items-center mb-5 pb-4 border-b border-gray-300"> <h3 className="text-3xl font-bold text-gray-800 flex items-center"><UsersRound size={32} className="mr-3 text-teal-600"/>Horario General</h3> <button onClick={onClose} className="text-gray-400 hover:text-red-600 p-1 rounded-full hover:bg-red-100 transition-colors"><XCircle size={32} /></button> </div> <div className="flex flex-grow overflow-hidden gap-x-4"> <div className="flex-grow overflow-auto custom-scrollbar pr-2 -mr-2 relative"> <div className="flex sticky top-0 z-20 bg-gray-200/80 backdrop-blur-sm"><div className="w-16 sm:w-20 shrink-0 p-2.5 border-b border-r border-gray-300"></div>{DIAS_SEMANA_ORDEN.map(dia => (<div key={`header-${dia}`} className="flex-1 p-2.5 text-center text-xs sm:text-sm font-semibold text-gray-700 capitalize border-b border-r border-gray-300">{dia.toLowerCase()}</div>))}</div> <div className="flex"> <div className="w-16 sm:w-20 shrink-0">{calendarTimeLabels.map(label => (<div key={`time-label-gen-${label}`} className="h-8 flex items-center justify-end pr-1 text-xs text-gray-500 border-r border-b border-gray-300">{label}</div>))}</div> <div className="flex-grow grid grid-cols-7 gap-px bg-gray-300 border-b border-r border-gray-300">{DIAS_SEMANA_ORDEN.map(dia => (<div key={`col-gen-${dia}`} className="relative">{calendarTimeLabels.map((ts_label) => { const slotData = aggregatedSchedule[dia]?.[ts_label] || { count: 0, specialistsDetails: [] }; const bgColor = getColorForCount(slotData.count); return (<div key={`${dia}-${ts_label}-gen`} className={`h-8 flex items-center justify-center text-xs font-medium border-b border-r border-gray-200/50 bg-white transition-all duration-150 ease-in-out ${bgColor} ${slotData.count > 0 ? 'cursor-pointer' : 'cursor-default'}`} onClick={() => handleCellClick(dia, ts_label, slotData)} title={`${ts_label}: ${slotData.count} especialista(s)`}>{slotData.count > 0 ? slotData.count : ''}</div>); })}</div>))}</div></div> </div> <div className={`flex-shrink-0 bg-white p-4 rounded-lg shadow-lg overflow-y-auto custom-scrollbar transition-all duration-300 ease-in-out ${selectedSlotDetails ? 'w-full md:w-1/3 lg:w-1/4 xl:w-1/5 opacity-100' : 'w-0 opacity-0'}`} style={{pointerEvents: selectedSlotDetails ? 'auto' : 'none'}}> {selectedSlotDetails ? (<><h4 className="text-lg font-semibold text-teal-700 mb-1 capitalize">{selectedSlotDetails.day.toLowerCase()}</h4><p className="text-2xl font-bold text-gray-700 mb-3">{selectedSlotDetails.timeLabel}</p><p className="text-sm text-gray-600 mb-3 border-b pb-3">{selectedSlotDetails.specialists.length} especialista(s):</p><ul className="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1">{selectedSlotDetails.specialists.map((esp, idx) => (<li key={esp.id + idx} className="p-2.5 bg-gray-50 rounded-md shadow-sm border border-gray-200 hover:shadow-md transition-shadow"><p className="font-semibold text-sm text-teal-600">{esp.nombre}</p><p className="text-xs text-gray-500">DNI: {esp.dni}</p><p className="text-xs text-gray-500">Sede: {esp.sede}</p><p className="text-xs text-gray-500">Franja: {formatFranja(esp.franja)}</p>{esp.hPresencial > 0 && <p className="text-xs text-green-600 flex items-center"><Briefcase size={12} className="mr-1"/> P: {esp.hPresencial}h</p>}{esp.hRemoto > 0 && <p className="text-xs text-blue-600 flex items-center"><Home size={12} className="mr-1"/> R: {esp.hRemoto}h</p>}</li>))}</ul></>) : (<div className="flex flex-col items-center justify-center h-full text-center text-gray-400 whitespace-nowrap"><SlidersHorizontal size={40} className="mb-3"/><p className="text-sm">Clic en celda</p><p className="text-xs">para ver detalles.</p></div>)} </div> </div> <p className="mt-4 text-xs text-gray-500 italic">Colores indican densidad. Horario de 07:00 a 22:00.</p> </div> </div> );
-};
-
-
-const DisponibilidadAcompaniamientoPage = () => {
-    const [disponibilidadRecords, setDisponibilidadRecords] = useState(mockDisponibilidadesIniciales);
-    const [usuarios] = useState(mockUsuarios);
-    const [error, setError] = useState(null);
-    const [successMessage, setSuccessMessage] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(15);
-    const [isIndividualScheduleModalOpen, setIsIndividualScheduleModalOpen] = useState(false);
-    const [selectedTeacherForIndividualSchedule, setSelectedTeacherForIndividualSchedule] = useState(null);
-    const [isGeneralScheduleModalOpen, setIsGeneralScheduleModalOpen] = useState(false);
-    const [editingRecord, setEditingRecord] = useState(null); 
-    
-    const clearMessages = useCallback(() => { setError(null); setSuccessMessage(null); }, []);
-    useEffect(() => { if (successMessage || error) { const timer = setTimeout(() => { clearMessages(); }, 3000); return () => clearTimeout(timer); } }, [successMessage, error, clearMessages]);
-
-    const filteredUsers = useMemo(() => {
-        let filtered = usuarios;
-        if (searchTerm) {
-            const lowerSearchTerm = searchTerm.toLowerCase();
-            filtered = usuarios.filter(user =>
-                user.apellidosNombresCompletos.toLowerCase().includes(lowerSearchTerm) ||
-                user.dni.toLowerCase().includes(lowerSearchTerm)
-            );
-        }
-        return filtered;
-    }, [usuarios, searchTerm]);
-
-    const paginatedUsers = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        return filteredUsers.slice(startIndex, startIndex + itemsPerPage);
-    }, [filteredUsers, currentPage, itemsPerPage]);
-
-    const totalDocs = filteredUsers.length;
-    const totalPages = Math.max(1, Math.ceil(totalDocs / itemsPerPage));
-
-    const handlePageChange = (newPage) => { if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) setCurrentPage(newPage); };
-    
-    const handleOpenEditModal = (recordId) => {
-        const recordToEdit = disponibilidadRecords.find(r => r.id === recordId);
-        if (recordToEdit) {
-            setEditingRecord(recordToEdit);
-        }
-    };
-
-    // ANOTACIÓN: Lógica mejorada para fusionar franjas horarias superpuestas o consecutivas.
-    const handleSaveOrUpdateAvailability = (updatedRecord) => {
-        const { userId, dia } = updatedRecord;
-
-        // Convertir la nueva franja a minutos
-        const [newStartStr, newEndStr] = updatedRecord.franja.split('-');
-        let newStartMinutes = timeStringToTotalMinutes(newStartStr);
-        let newEndMinutes = timeStringToTotalMinutes(newEndStr);
-
-        // Acumular los datos del nuevo bloque fusionado.
-        let mergedHoursPresencial = updatedRecord.horasDisponiblesParaRealizarAcompaniamientoPresencial;
-        let mergedHoursRemoto = updatedRecord.horasDisponiblesParaRealizarAcompaniamientoRemoto;
-
-        const recordsToMergeAndRemove = new Set();
-        if (!String(updatedRecord.id).startsWith('draft_')) {
-            recordsToMergeAndRemove.add(updatedRecord.id);
-        }
-
-        // Buscar otros registros del mismo usuario y día para verificar superposiciones.
-        const otherRecordsOnSameDay = disponibilidadRecords.filter(
-            r => r.userId === userId && r.dia === dia && r.id !== updatedRecord.id
         );
-
-        otherRecordsOnSameDay.forEach(existingRecord => {
-            const [existingStartStr, existingEndStr] = existingRecord.franja.split('-');
-            const existingStartMinutes = timeStringToTotalMinutes(existingStartStr);
-            const existingEndMinutes = timeStringToTotalMinutes(existingEndStr);
-
-            // Comprobar si las franjas se superponen o son consecutivas
-            if (newStartMinutes <= existingEndMinutes && newEndMinutes >= existingStartMinutes) {
-                // Fusionar las franjas
-                newStartMinutes = Math.min(newStartMinutes, existingStartMinutes);
-                newEndMinutes = Math.max(newEndMinutes, existingEndMinutes);
-
-                // Sumar las horas. Podrías implementar otra lógica si es necesario.
-                mergedHoursPresencial += existingRecord.horasDisponiblesParaRealizarAcompaniamientoPresencial;
-                mergedHoursRemoto += existingRecord.horasDisponiblesParaRealizarAcompaniamientoRemoto;
-
-                // Marcar el registro existente para su eliminación
-                recordsToMergeAndRemove.add(existingRecord.id);
-            }
-        });
-
-        // Convertir los minutos de nuevo a formato HHMM
-        const formatMinutesToHHMM = (totalMinutes) => {
-            const hours = Math.floor(totalMinutes / 60);
-            const minutes = totalMinutes % 60;
-            return `${String(hours).padStart(2, '0')}${String(minutes).padStart(2, '0')}`;
-        };
-
-        const finalFranja = `${formatMinutesToHHMM(newStartMinutes)}-${formatMinutesToHHMM(newEndMinutes)}`;
-
-        const finalRecord = {
-            ...updatedRecord,
-            id: `disp_${Date.now()}`, // Crear un nuevo ID para el bloque fusionado
-            franja: finalFranja,
-            horasDisponiblesParaRealizarAcompaniamientoPresencial: mergedHoursPresencial,
-            horasDisponiblesParaRealizarAcompaniamientoRemoto: mergedHoursRemoto,
-        };
-
-        setDisponibilidadRecords(prev => {
-            // Eliminar todos los registros que se han fusionado
-            const recordsWithoutMerged = prev.filter(r => !recordsToMergeAndRemove.has(r.id));
-            // Añadir el nuevo registro fusionado
-            return [...recordsWithoutMerged, finalRecord];
-        });
-        
-        setEditingRecord(null);
-        setSuccessMessage("Disponibilidad guardada y fusionada exitosamente.");
     };
 
-    const handleDeleteAvailability = (recordId) => {
-        setDisponibilidadRecords(prev => prev.filter(r => r.id !== recordId));
-        setSuccessMessage("Disponibilidad eliminada.");
-    };
-
-    const openIndividualScheduleModal = (userId) => { 
-        const teacher = usuarios.find(u => u.id === userId); 
-        if (teacher) { 
-            setSelectedTeacherForIndividualSchedule(teacher); 
-            setIsIndividualScheduleModalOpen(true); 
-        }
-    };
-    
     return (
-        <div className="container mx-auto p-4 md:p-6 bg-gray-50 min-h-screen font-sans">
-            <header className="mb-8">
-                <h1 className="text-4xl font-bold text-gray-800 flex items-center"><CalendarDays className="mr-4 text-teal-600" size={40} /> Gestión de Disponibilidad</h1>
-                <p className="text-sm text-gray-500 ml-14">Asigne y visualice horarios para acompañamiento.</p>
-            </header>
-
-            <div className="my-4 space-y-3">
-                {error && (<div className="fixed top-5 right-5 z-[100] p-4 bg-red-100 text-red-700 border border-red-300 rounded-lg shadow-lg flex items-center animate-fadeIn"><AlertTriangle className="h-5 w-5 mr-3" /><div><strong className="font-bold">Error:</strong><p className="text-sm">{error}</p></div><button onClick={clearMessages} className="ml-4 text-red-800"><XCircle size={18}/></button></div>)}
-                {successMessage && (<div className="fixed top-5 right-5 z-[100] p-4 bg-green-100 text-green-800 border border-green-300 rounded-lg shadow-lg flex items-center animate-fadeIn"><div className="flex items-center"><ListChecks className="h-5 w-5 mr-3" /><div><strong className="font-bold">Éxito:</strong><p className="text-sm">{successMessage}</p></div></div><button onClick={clearMessages} className="ml-4 text-green-800"><XCircle size={18}/></button></div>)}
-            </div>
-            
-            <div className="mb-6 flex space-x-4">
-                <button onClick={() => {setIsGeneralScheduleModalOpen(true); clearMessages();}} className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transform hover:scale-105 transition-transform duration-150">
-                    <UsersRound className="mr-2 h-5 w-5" />Ver Horario General
+      <>
+        <div className="flex flex-wrap items-start gap-4 mb-8">
+            <form onSubmit={handleSearch} className="flex-grow flex gap-4">
+                <input type="text" value={dni} onChange={(e) => setDni(e.target.value)} placeholder="Ingresar DNI del especialista" className="flex-grow bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-cyan-500 focus:outline-none"/>
+                <button type="submit" disabled={status === 'loading'} className="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300 disabled:bg-slate-600">
+                    {status === 'loading' ? 'Buscando...' : 'Buscar'}
                 </button>
-            </div>
-
-            <section className="bg-white rounded-xl shadow-xl p-6">
-                <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                    <h2 className="text-2xl font-semibold text-gray-700 flex items-center"><Users className="mr-2 text-teal-600" /> Lista de Especialistas ({usuarios.length})</h2>
-                    <input type="text" placeholder="Buscar especialista por DNI o nombre..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setCurrentPage(1);}} className="w-full md:w-2/5 p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent shadow-sm" />
-                </div>
-                {!paginatedUsers.length ? ( <div className="text-center py-12"> <Users size={56} className="mx-auto text-gray-400 mb-4" /> <p className="text-xl text-gray-500 mb-2">{usuarios.length === 0 ? "No hay especialistas." : "No se encontraron especialistas."}</p></div> ) : ( <> <div className="overflow-x-auto shadow-md rounded-lg"> <table className="min-w-full divide-y divide-gray-200"><thead className="bg-gray-100"><tr>{['Especialista', 'DNI', 'Email', 'Teléfono', 'Pref. Horarios', 'Pref. Sede', 'Acciones'].map(header => (<th key={header} scope="col" className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{header}</th>))}</tr></thead><tbody className="bg-white divide-y divide-gray-200">{paginatedUsers.map((usuario) => ( <tr key={usuario.id} className="hover:bg-teal-50/50 transition-colors duration-150 group"><td className="px-5 py-4 whitespace-nowrap text-sm text-gray-800 font-medium">{usuario.apellidosNombresCompletos}</td><td className="px-5 py-4 whitespace-nowrap text-sm">{usuario.dni}</td><td className="px-5 py-4 whitespace-nowrap text-sm">{usuario.email}</td><td className="px-5 py-4 whitespace-nowrap text-sm">{usuario.telefono}</td><td className="px-5 py-4 text-sm max-w-xs truncate" title={usuario.preferenciaHorarios}>{usuario.preferenciaHorarios}</td><td className="px-5 py-4 whitespace-nowrap text-sm">{usuario.sedePreferida}</td><td className="px-5 py-4 whitespace-nowrap text-sm"><div className="flex space-x-3"><button onClick={() => openIndividualScheduleModal(usuario.id)} className="text-purple-600 hover:text-purple-900" title="Ver/Editar Horario Individual"><Eye size={20} /></button></div></td></tr> ))}</tbody></table></div> {totalPages > 1 && ( <div className="mt-6 flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0"> <p className="text-sm text-gray-700">Mostrando <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> - <span className="font-medium">{Math.min(currentPage * itemsPerPage, totalDocs)}</span> de <span className="font-medium">{totalDocs}</span></p> <div className="flex items-center space-x-2"> <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50">Anterior</button> <span className="text-sm text-gray-700">Página {currentPage} de {totalPages}</span> <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50">Siguiente</button> </div> </div> )} </>)}
-            </section>
-
-            <WeeklyScheduleModal 
-                isOpen={isIndividualScheduleModalOpen} 
-                onClose={() => {setIsIndividualScheduleModalOpen(false); setSelectedTeacherForIndividualSchedule(null);}} 
-                teacher={selectedTeacherForIndividualSchedule} 
-                records={disponibilidadRecords} 
-                onEditSlot={handleOpenEditModal} 
-                onEmptyCellClick={(day, time) => {
-                    const user = selectedTeacherForIndividualSchedule;
-                    if (!user) return;
-                    const startTime = time.replace(':', '');
-                    const endTimeMinutes = timeStringToTotalMinutes(startTime) + 90;
-                    const endHour = Math.floor(endTimeMinutes / 60);
-                    const endMinute = endTimeMinutes % 60;
-                    const endTime = `${String(endHour).padStart(2,'0')}${String(endMinute).padStart(2,'0')}`;
-                    
-                    let turno = 'NOCHE';
-                    const startHour = parseInt(startTime.substring(0,2), 10);
-                    if(startHour < 12) turno = 'MAÑANA';
-                    else if (startHour < 18) turno = 'TARDE';
-
-                    const newSlot = {
-                        id: `draft_${Date.now()}`,
-                        userId: user.id,
-                        apellidosNombresCompletos: user.apellidosNombresCompletos,
-                        dni: user.dni,
-                        dia: day,
-                        franja: `${startTime}-${endTime}`,
-                        sede1DePreferenciaPresencial: user.sedePreferida || '',
-                        turno: turno,
-                        horasDisponiblesParaRealizarAcompaniamientoPresencial: 1.5,
-                        horasDisponiblesParaRealizarAcompaniamientoRemoto: 0,
-                    };
-                    setEditingRecord(newSlot);
-                }}
-            />
-            <GeneralScheduleModal 
-                isOpen={isGeneralScheduleModalOpen} 
-                onClose={() => setIsGeneralScheduleModalOpen(false)} 
-                allDisponibilidades={disponibilidadRecords} 
-                usuarios={usuarios}
-            />
-            <EditAvailabilityModal
-                isOpen={!!editingRecord}
-                onClose={() => setEditingRecord(null)}
-                record={editingRecord}
-                onSave={handleSaveOrUpdateAvailability}
-                onDelete={(recordId) => {
-                    handleDeleteAvailability(recordId);
-                    setEditingRecord(null);
-                }}
-            />
-            
-            <style>{`
-                .input-style { display: block; width: 100%; padding: 0.625rem; border: 1px solid #D1D5DB; border-radius: 0.375rem; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; }
-                .input-style:focus { outline: 2px solid transparent; outline-offset: 2px; border-color: #0D9488; box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.3); }
-                .select-style { display: block; width: 100%; padding: 0.625rem; border: 1px solid #D1D5DB; border-radius: 0.375rem; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); background-color: white; appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
-                .select-style:focus { outline: 2px solid transparent; outline-offset: 2px; border-color: #0D9488; box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.3); }
-                .animate-fadeIn { animation: fadeIn 0.5s ease-out; }
-                @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-                .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
-                .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: #14B8A6; border-radius: 10px; }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #0D9488; }
-            `}</style>
+            </form>
+            <button 
+                onClick={handleDownloadAll} 
+                disabled={downloadStatus === 'loading'} 
+                className="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300 disabled:bg-slate-600 flex items-center gap-2"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                {downloadStatus === 'loading' ? 'Generando...' : 'Descargar Todo'}
+            </button>
         </div>
-    );
-};
 
-export default DisponibilidadAcompaniamientoPage;
+        {error && <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg mb-4" role="alert"><strong className="font-bold">Error de Búsqueda: </strong><span className="block sm:inline">{error}</span></div>}
+        {downloadError && <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg mb-4" role="alert"><strong className="font-bold">Error de Descarga: </strong><span className="block sm:inline">{downloadError}</span></div>}
+        
+        {specialist && (
+          <div className="mt-6 bg-slate-900/50 p-6 rounded-lg">
+            <div className="flex justify-between items-start">
+                <h3 className="text-3xl font-bold text-cyan-400 mb-4">{specialist.nombre}</h3>
+                {!isEditing ? (
+                    <button onClick={() => setIsEditing(true)} className="bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-4 rounded-lg">Editar Perfil</button>
+                ) : (
+                    <div className="flex gap-2">
+                        <button onClick={handleUpdate} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg">Guardar</button>
+                        <button onClick={handleCancelEdit} className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-lg">Cancelar</button>
+                    </div>
+                )}
+            </div>
+            <p className="text-slate-400">DNI: {specialist.dni} | Antigüedad: {specialist.antiguedad} | Horas: {specialist.disponibilidadHoras}</p>
+
+            <div className="grid md:grid-cols-2 gap-6 mt-6">
+                <div>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">Segmentos de Preferencia</label>
+                    {isEditing ? <input type="text" name="segmentosPreferencia" value={editableData.segmentosPreferencia} onChange={handleInputChange} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-2"/> : <p className="bg-slate-800 p-2 rounded-lg">{specialist.segmentosPreferencia.join(', ')}</p>}
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">Modalidad de Preferencia</label>
+                    {isEditing ? <input type="text" name="modalidadPreferencia" value={editableData.modalidadPreferencia} onChange={handleInputChange} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-2"/> : <p className="bg-slate-800 p-2 rounded-lg">{specialist.modalidadPreferencia.join(', ')}</p>}
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">Sede de Preferencia</label>
+                    {isEditing ? <input type="text" name="sedePreferencia" value={editableData.sedePreferencia} onChange={handleInputChange} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-2"/> : <p className="bg-slate-800 p-2 rounded-lg">{specialist.sedePreferencia.join(', ')}</p>}
+                </div>
+                 <div>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">Nota Rúbrica</label>
+                    {isEditing ? <input type="text" name="notaRubrica" value={editableData.notaRubrica} onChange={handleInputChange} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-2"/> : <p className="bg-slate-800 p-2 rounded-lg">{specialist.notaRubrica || 'N/A'}</p>}
+                </div>
+            </div>
+            
+            <h4 className="text-2xl font-semibold text-cyan-400 mt-8 mb-2">Calendario de Disponibilidad</h4>
+            <CalendarView horarios={specialist.horarios} isEditing={isEditing} onToggle={handleToggleHorario} />
+          </div>
+        )}
+      </>
+    );
+  };
+
+  return (
+    <div className="bg-slate-900 text-white min-h-screen flex flex-col items-center p-4 font-sans">
+      <div className="w-full max-w-6xl mx-auto bg-slate-800 rounded-xl shadow-2xl p-6 md:p-8">
+        <div className="border-b border-slate-600 mb-6">
+          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+            <button onClick={() => setActiveTab('editor')} className={`${activeTab === 'editor' ? 'border-cyan-500 text-cyan-400' : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg`}>Ver y Editar Disponibilidad</button>
+            <button onClick={() => setActiveTab('uploader')} className={`${activeTab === 'uploader' ? 'border-cyan-500 text-cyan-400' : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg`}>Carga Masiva</button>
+          </nav>
+        </div>
+        
+        {activeTab === 'uploader' ? <UploaderView /> : <EditorView />}
+      </div>
+    </div>
+  );
+}

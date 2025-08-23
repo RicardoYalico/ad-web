@@ -455,7 +455,7 @@ const TablaDinamica = () => {
     useEffect(() => {
         const cargarRegistros = async () => {
             try {
-                const response = await fetch('https://kali-ad-web.beesoftware.net/api/rubricas');
+                const response = await fetch('http://localhost:3001/api/rubricas');
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
 
@@ -856,7 +856,7 @@ const TablaDinamica = () => {
                 <EditRecordComponent record={editingRecord} onClose={handleCloseEdit} onSave={handleSaveEdit} />
             ) : (
                 <> {/* Fragmento para renderizar la tabla y controles cuando no se está viendo/editando */}
-                    <h1 style={{ textAlign: 'center', color: '#333', marginBottom: '25px' }}>Tabla Dinámica de Registros</h1>
+                    <h1 style={{ textAlign: 'center', color: '#333', marginBottom: '25px' }}>Registros de cumplimiento</h1>
 
                     <div style={filterControlSectionStyle}>
                         <div>

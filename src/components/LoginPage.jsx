@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
-import { BookOpen, Mail, Lock } from 'lucide-react';
+import { BookOpen, UserCircle, Lock } from 'lucide-react'; // Cambiado Mail a UserCircle
 
 const LoginPage = ({ onLogin }) => {
-  const [email, setEmail] = useState('');
+  const [dni, setDni] = useState(''); // Cambiado de 'email' a 'dni'
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
-    const success = onLogin(email, password);
+    // Pasa 'dni' en lugar de 'email' a la función onLogin
+    const success = onLogin(dni, password);
     if (!success) {
-      setError('Correo electrónico o contraseña incorrectos.');
+      // Mensaje de error actualizado
+      setError('DNI o contraseña incorrectos.');
     }
   };
 
@@ -21,10 +23,10 @@ const LoginPage = ({ onLogin }) => {
         <div className="text-center">
           <BookOpen className="mx-auto h-16 w-auto text-blue-600" />
           <h2 className="mt-6 text-4xl font-bold tracking-tight text-gray-900">
-            Gestión Educativa
+            Gestión del Acompañamiento Docente
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Inicia sesión para acceder al panel de asignaciones.
+            Inicia sesión para acceder al sistema.
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -35,12 +37,24 @@ const LoginPage = ({ onLogin }) => {
           )}
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label htmlFor="email-address" className="sr-only">Correo electrónico</label>
+              {/* Etiqueta y placeholder para el campo DNI */}
+              <label htmlFor="dni-input" className="sr-only">DNI</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                  {/* Ícono de UserCircle para el DNI */}
+                  <UserCircle className="h-5 w-5 text-gray-400" aria-hidden="true" />
                 </div>
-                <input id="email-address" name="email" type="email" autoComplete="email" required className="appearance-none rounded-none relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" placeholder="Correo electrónico" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <input
+                  id="dni-input" // Cambiado id
+                  name="dni"     // Cambiado name
+                  type="text"    // Cambiado type a 'text' para permitir DNI con letras si aplica, o 'number' si solo son dígitos
+                  autoComplete="username" // Sugerencia de autocomplete ajustada
+                  required
+                  className="appearance-none rounded-none relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                  placeholder="DNI" // Cambiado placeholder
+                  value={dni}
+                  onChange={(e) => setDni(e.target.value)}
+                />
               </div>
             </div>
             <div>
@@ -49,12 +63,25 @@ const LoginPage = ({ onLogin }) => {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-gray-400" aria-hidden="true" />
                 </div>
-                <input id="password" name="password" type="password" autoComplete="current-password" required className="appearance-none rounded-none relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" placeholder="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)} />
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  className="appearance-none rounded-none relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                  placeholder="Contraseña"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
               </div>
             </div>
           </div>
           <div>
-            <button type="submit" className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+            <button
+              type="submit"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            >
               Iniciar Sesión
             </button>
           </div>
