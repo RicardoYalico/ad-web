@@ -21,6 +21,7 @@ import SeleccionDocenteSeguimiento from './pages/SeleccionDocenteSeguimiento';
 import RubricTemplatesManager from './pages/RubricTemplatesManager';
 import GestionSegmentacion from './pages/GestionSegmentacionPage';
 import SuperMallaPage from './pages/SuperMallaPage';
+import TeacherSearchView from './pages/TeacherSearchView';
 // AGREGAR esta línea después:
 import NotificationBell from './components/NotificationBell';
 // <-- MEJORA: Se definen constantes para los roles para evitar errores de tipeo.
@@ -53,6 +54,7 @@ const pageAccessConfig = {
       'Selección Docente Seguimiento',
       'Gestión de Segmentación',
       'Super Malla',
+      'Teacher Search View',
     ],
     defaultPage: 'Dashboard de Resultados',
   },
@@ -181,6 +183,8 @@ const App = () => {
         return <GestionSegmentacion />;
       case 'Super Malla':
         return <SuperMallaPage />;
+      case 'Teacher Search View':
+        return <TeacherSearchView />;
       default:
         // Si la página activa está vacía (ej. al inicio antes del useEffect), no mostrar nada o un loader.
         if (!page) return null;  
@@ -198,6 +202,7 @@ const App = () => {
     { name: 'Disponibilidad', icon: <Clock size={20} /> },
     { name: 'Gestión de Segmentación', icon: <Users size={20} /> },
     { name: 'Super Malla', icon: <MapPin size={20} /> },
+    { name: 'Teacher Search View', icon: <Search size={20} /> },
   ];
 
   // <-- MEJORA: El menú se filtra de forma robusta y centralizada.
